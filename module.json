@@ -1,0 +1,10 @@
+{
+  "name": "bitbucket",
+  "version": "1.0.0",
+  "description": "Bitbucket integration module for LuCLI",
+  "author": "Mark Drew mark.drew@gmail.com",
+  "license": "MIT",
+  "keywords": ["lucli", "module", "cfml", "bitbucket"],
+  "main": "Module.cfc",
+  "created": "2025-10-31T14:34:42.106931Z"
+}

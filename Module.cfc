@@ -1,0 +1,310 @@
+        
+component {
+    /**
+     * bitbucket Module
+     * 
+     * This is the main entry point for your module.
+     * Implement your module logic in the main() function.
+     */
+    
+    function init(
+        boolean verboseEnabled=false,
+        boolean timingEnabled=false,
+        string cwd="",
+        any timer
+        ) {
+            variables.verboseEnabled = arguments.verboseEnabled;
+            variables.timingEnabled = arguments.timingEnabled;
+            variables.cwd = arguments.cwd;
+            variables.timer = arguments.timer ?: {};
+        // Module initialization code goes here
+        return this;
+    }
+    /*
+    Bitbucket Pipelines set the following variables anyway
+        Default variables:
+            BITBUCKET_BRANCH
+            BITBUCKET_BUILD_NUMBER
+            BITBUCKET_CLONE_DIR
+            BITBUCKET_COMMIT
+            BITBUCKET_GIT_HTTP_ORIGIN
+            BITBUCKET_GIT_SSH_ORIGIN
+            BITBUCKET_PIPELINES_VARIABLES_PATH
+            BITBUCKET_PIPELINE_UUID
+            BITBUCKET_PROJECT_KEY
+            BITBUCKET_PROJECT_UUID
+            BITBUCKET_PR_DESTINATION_BRANCH
+            BITBUCKET_PR_DESTINATION_COMMIT
+            BITBUCKET_PR_ID
+            BITBUCKET_REPO_FULL_NAME
+            BITBUCKET_REPO_IS_PRIVATE
+            BITBUCKET_REPO_OWNER
+            BITBUCKET_REPO_OWNER_UUID
+            BITBUCKET_REPO_SLUG
+            BITBUCKET_REPO_UUID
+            BITBUCKET_SSH_KEY_FILE
+            BITBUCKET_STEP_RUN_NUMBER
+            BITBUCKET_STEP_TRIGGERER_UUID
+            BITBUCKET_STEP_UUID
+            BITBUCKET_TEST_METADATA_FILE_PATH
+            BITBUCKET_WORKSPACE
+            CI
+            DOCKER_HOST
+    */
+    function main(string action="") {
+
+        var possibleActions = ["createReport", "createAnnotations", "getPullRequestDiff"];
+        if(!arrayContains(possibleActions, arguments.action)){
+            out("❌ Unknown action: " & action);
+            out("Available actions: " & arrayToList(possibleActions));
+            return;
+        }
+
+        // Read from arguments or environment variables
+        arguments["repoSlug"] = arguments.repoSlug ?: getEnv("BITBUCKET_REPO_SLUG", "");
+        arguments["workspace"] = arguments.workspace ?: getEnv("BITBUCKET_WORKSPACE", "");
+        arguments["commit"] = arguments.commit ?: getEnv("BITBUCKET_COMMIT", "");
+        arguments["authToken"] = arguments.authToken ?: getEnv("BITBUCKET_AUTH_TOKEN", "");
+
+        
+        var bitbucket = new BitbucketClient(
+            repoSlug = arguments.repoSlug,
+            workspace = arguments.workspace,
+            authToken = arguments.authToken);
+    
+        switch(arguments.action){
+            case "createReport":
+                var reportData = deserializeJson(fileRead(arguments.file));
+                var response = bitbucket.createReport(
+                    reportData = reportData,
+                    commit = arguments.commit
+                );
+                out("Report created:");
+                var bitbucketResponse = DeserializeJSON(response.fileContent);
+                out(bitbucketResponse);
+
+                if(reportData.keyExists("annotations") && arrayLen(reportData.annotations) GT 0){
+                    out("Annotations included: " & arrayLen(reportData.annotations));
+                
+                    var annotationResponse = bitbucket.createAnnotations(
+                        annotations = reportData.annotations,
+                        commit = arguments.commit,
+                        reportSlug = bitbucketResponse.external_id
+                    );
+                    var annotationResp = DeserializeJSON(annotationResponse.fileContent);
+                    out(annotationResp);   
+                }
+                
+                break;
+            case "createAnnotations":
+                var reportData = deserializeJson(fileRead(arguments.file));
+                if(NOT reportData.keyExists("annotations") || arrayLen(reportData.annotations) EQ 0){
+                    out("❌ No annotations found in report data");
+                    return;
+                }
+                var annotationResponse = bitbucket.createAnnotations(
+                    annotations = reportData.annotations,
+                    commit = arguments.commit,
+                    reportSlug = arguments.reportSlug
+                );
+            case "getPullRequestDiff":
+
+                // For this function we need a pull request id
+                arguments["pullRequestId"] = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+                var diffStatResponse = bitbucket.getPullRequestDiff(
+                    pullRequestId = arguments.pullRequestId
+                );
+                out("Pull Request Diff:");
+                var prDiffStat = DeserializeJSON(diffStatResponse.fileContent);
+                out(prDiffStat);
+                break;
+            default:
+                out("❌ Action not implemented: #arguments.action#");
+            
+        }
+        
+        return "Module executed successfully";
+    }
+
+
+    /**
+     * Returns the Diff text of a pull request
+     *
+     * @pullRequestId The id of the pull request
+     */
+    function getPullRequestDiff(
+        numeric pullRequestId = 0
+        // TODO: add authToken, repoSlug, workspace as args?
+    ){
+        // For this function we need a pull request id
+        var pullRequestId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+        var diffStatResponse = bitbucket.getPullRequestDiff(
+            pullRequestId = pullRequestId
+        );
+
+        if(diffStatREsponse.mimetype EQ "application/json"){
+            var prDiffStat = DeserializeJSON(diffStatResponse.fileContent);
+            out(prDiffStat);
+            return prDiffStat;
+        }
+        out(diffStatResponse.fileContent);
+        return diffStatResponse.fileContent;
+    
+    }
+    
+    /*
+        Filter annotations using a diff file to only include those that are in the diff
+        @reportPath string Path to the Pull Request report file
+        @diffFilePath string Path to the diff file
+    */
+    function filterAnnotationsInDiff(string reportPath, string diffFilePath) {
+        var filtered = [];
+        var reportData = deserializeJson(fileRead(reportPath));
+        var diffStruct = parseDiffSimple(diffFilePath)
+        var changedLinesByFile = {};
+        // dump(var=diffStruct, label="Diff File as Struct"); 
+       
+        for(var filePath in diffStruct){
+            changedLinesByFile[filePath] = [];
+            changedLinesByFile[filePath] = diffStruct[filePath].map(
+                function(lineDiff){
+                    return lineDiff.line;
+                }
+            );
+        }
+
+        filtered = reportData.annotations.filter(
+            function(ann){
+                if( ! structKeyExists(diffStruct, ann.path) ){
+                    return false;
+                }
+                // If we have an end_line, check the range
+                if( structKeyExists(ann, "end_line") ){
+                    for(var lineNum=ann.line; lineNum LTE ann.end_line; lineNum++){
+                        if( arrayContains(changedLinesByFile[ann.path], lineNum) ){
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                if( ! arrayContains(changedLinesByFile[ann.path], ann.line) ){
+                    return false;
+                }
+                return true;
+            }
+        );
+       
+        // dump(reportData); 
+        return filtered;
+    }
+   
+    /**
+     * Function to parse a diff file to extract the file and changed lines
+     *
+     * @diffFilePath the path to the diff text file (not the diffstat)
+     */
+    private function parseDiffSimple(diffFilePath) {
+        var result = {};
+        var diffContent = fileRead(diffFilePath);
+        var lines = listToArray(diffContent, chr(10));
+        
+        var currentFile = "";
+        var currentLineNum = 0;
+        var lastWasRemoved = false;
+        var lastRemovedLine = 0;
+        
+        for (var line in lines) {
+           
+            // Extract file path from diff header
+            if (reFindNoCase("^diff --git", line)) {
+                var pathMatch = reMatch("b/(.+?)(\s|$)", line);
+               
+                if (arrayLen(pathMatch) > 0) {
+                    currentFile = pathMatch[1].substring(2);
+                    if (!structKeyExists(result, currentFile)) {
+                        result[currentFile] = [];
+                    }
+                }
+                lastWasRemoved = false;
+            }
+            
+            // Extract line number from hunk header
+            if (reFindNoCase("^@@", line)) {
+                var hunkMatch = reMatch("\+(\d+)(?:,(\d+))?", line);
+                if (arrayLen(hunkMatch) > 0) {
+                    currentLineNum = val(hunkMatch[1]);
+                }
+                lastWasRemoved = false;
+            }
+            
+            // Track added lines
+            if (left(line, 1) == "+" && !reFindNoCase("^\+\+\+", line)) {
+                var action = "added";
+                
+                // If last line was removed, mark as changed instead
+                // if (lastWasRemoved) {
+                //     action = "changed";
+                //     // Update the last removed entry to changed
+                //     var lastEntry = result[currentFile][arrayLen(result[currentFile])];
+                    
+                // }
+                
+                if (currentFile != "") {
+                    arrayAppend(result[currentFile], {
+                        line: currentLineNum,
+                        action: action
+                    });
+                }
+                currentLineNum++;
+                lastWasRemoved = false;
+            }
+            // Track removed lines
+            else if (left(line, 1) == "-" && !reFindNoCase("^---", line)) {
+                if (currentFile != "") {
+                    arrayAppend(result[currentFile], {
+                        line: currentLineNum,
+                        action: "removed"
+                    });
+                }
+                lastWasRemoved = true;
+                lastRemovedLine = currentLineNum;
+            }
+            // Context lines increment line counter
+            else if (left(line, 1) == " ") {
+                currentLineNum++;
+                lastWasRemoved = false;
+            }
+        }
+        
+        return result;
+    }
+
+
+    // Helper Functions
+    private void function out(any message){
+        if(!isSimpleValue(message)){
+            message = serializeJson(var=message, compact=false);
+        }
+        writeOutput(message & chr(10));
+    }
+
+    function getEnv(String envKeyName, String defaultValue=""){
+        var envValue = SERVER.system.environment[envKeyName];
+        if(isNull(envValue)){
+            return defaultValue;
+        }
+        return envValue;
+    }
+
+    function verbose(any message){
+        if(variables.verboseEnabled){
+            dump(message);
+        }
+    }
+}
+        

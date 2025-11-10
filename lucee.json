@@ -1,0 +1,24 @@
+{
+  "name" : "bitbucket",
+  "version" : "6.2.2.91",
+  "port" : 8001,
+  "webroot" : "./",
+  "monitoring" : {
+    "enabled" : true,
+    "jmx" : {
+      "port" : 8999
+    }
+  },
+  "jvm" : {
+    "maxMemory" : "512m",
+    "minMemory" : "128m",
+    "additionalArgs" : [ ]
+  },
+  "urlRewrite" : {
+    "enabled" : true,
+    "routerFile" : "index.cfm"
+  },
+  "admin" : {
+    "enabled" : true
+  }
+}
