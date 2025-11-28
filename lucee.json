@@ -4,19 +4,15 @@
   "port" : 8001,
   "webroot" : "./",
   "monitoring" : {
-    "enabled" : true,
+    "enabled" : false,
     "jmx" : {
-      "port" : 8999
+      "port" : 9999
     }
   },
   "jvm" : {
     "maxMemory" : "512m",
     "minMemory" : "128m",
     "additionalArgs" : [ ]
-  },
-  "urlRewrite" : {
-    "enabled" : true,
-    "routerFile" : "index.cfm"
   },
   "admin" : {
     "enabled" : true

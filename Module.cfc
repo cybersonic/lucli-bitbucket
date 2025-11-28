@@ -1,5 +1,5 @@
         
-component {
+component extends="modules.BaseModule" {
     /**
      * bitbucket Module
      * 
@@ -133,7 +133,8 @@ component {
      * @pullRequestId The id of the pull request
      */
     function getPullRequestDiff(
-        numeric pullRequestId = 0
+        numeric pullRequestId = 0,
+        string outputPath=""
         // TODO: add authToken, repoSlug, workspace as args?
     ){
         // For this function we need a pull request id
@@ -147,28 +148,50 @@ component {
             pullRequestId = pullRequestId
         );
 
+        var prDiffStat = "";
+
+        var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+        
         if(diffStatREsponse.mimetype EQ "application/json"){
             var prDiffStat = DeserializeJSON(diffStatResponse.fileContent);
-            out(prDiffStat);
+            if(Len(arguments.outputPath)){
+                // Save to file
+                fileWrite(absOutputPath, serializeJson(diffStatResponse.fileContent));
+                out("Pull Request Diff written to: " & absOutputPath);
+                return;
+            }
+            else{
+                out(prDiffStat);
+            }
             return prDiffStat;
         }
-        out(diffStatResponse.fileContent);
+
+        if(Len(arguments.outputPath)){
+                // Save to file
+                fileWrite(absOutputPath, diffStatResponse.fileContent);
+                out("Pull Request Diff written to: " & absOutputPath);
+                return;
+            }
+            else{
+                out(diffStatResponse.fileContent);
+            }
         return diffStatResponse.fileContent;
-    
     }
     
     /*
         Filter annotations using a diff file to only include those that are in the diff
         @reportPath string Path to the Pull Request report file
         @diffFilePath string Path to the diff file
+        @rootPath string Root path to strip from annotation paths
     */
-    function filterAnnotationsInDiff(string reportPath, string diffFilePath) {
+    function filterAnnotationsInDiff(string reportPath, string diffFilePath, string rootPath="", string outputPath="") {
         var filtered = [];
         var reportData = deserializeJson(fileRead(reportPath));
         var diffStruct = parseDiffSimple(diffFilePath)
         var changedLinesByFile = {};
-        // dump(var=diffStruct, label="Diff File as Struct"); 
+        
        
+
         for(var filePath in diffStruct){
             changedLinesByFile[filePath] = [];
             changedLinesByFile[filePath] = diffStruct[filePath].map(
@@ -177,30 +200,56 @@ component {
                 }
             );
         }
+        // out(changedLinesByFile);
+        
+        foundAnnotations = []
+        
+        // Note: making the assumption that the changedLinesByFile are sequential. Kinda important.
 
-        filtered = reportData.annotations.filter(
-            function(ann){
-                if( ! structKeyExists(diffStruct, ann.path) ){
-                    return false;
-                }
-                // If we have an end_line, check the range
-                if( structKeyExists(ann, "end_line") ){
-                    for(var lineNum=ann.line; lineNum LTE ann.end_line; lineNum++){
-                        if( arrayContains(changedLinesByFile[ann.path], lineNum) ){
-                            return true;
+        for(var filePath in changedLinesByFile){
+            // dump(var=filePath, label="Processing file: " & filePath);
+            for(var lineNum in changedLinesByFile[filePath]){
+                // dump(var=lineNum, label="Changed line: " & lineNum);
+                // Now loop through all the annotations to see if they match
+                for(var annotation in reportData.annotations){
+                    out("Annotation real path: " & annotation.path);
+                    var annotationRealPath = Right((annotation.path), Len(annotation.path) - Len(rootPath));
+                    if(annotationRealPath NEQ filePath){
+                        continue;
+                    }
+                    // dump(var=annotation, label="Checking annotation " & annotationRealPath & ":" & annotation.line);
+                    // If we have an end_line, check the range
+                    if( structKeyExists(annotation, "end_line") ){
+                        if( lineNum GTE annotation.line AND lineNum LTE annotation.end_line ){
+                            // dump(var=annotation, label="FOUND annotation in range " & annotationRealPath & ":" & annotation.line & "-" & annotation.end_line);
+                            if(!arrayContains(foundAnnotations, annotation)){
+                                arrayAppend(foundAnnotations, annotation);
+                            }
+                        }
+                    } else {
+                        if( lineNum EQ annotation.line ){
+                            // dump(var=annotation, label="FOUND annotation at line " & annotationRealPath & ":" & annotation.line);
+                            if(!arrayContains(foundAnnotations, annotation)){
+                                arrayAppend(foundAnnotations, annotation);
+                            }
                         }
                     }
-                    return false;
                 }
-                if( ! arrayContains(changedLinesByFile[ann.path], ann.line) ){
-                    return false;
-                }
-                return true;
             }
-        );
-       
-        // dump(reportData); 
-        return filtered;
+            
+        }
+        out(foundAnnotations);
+
+        if(Len(arguments.outputPath)){
+                // Save to file
+                var absOutputPath = getAbsolutePath(variables.cwd, outputPath);
+                fileWrite(absOutputPath, serializeJson(foundAnnotations));
+                out("Filtered annotations written to: " & absOutputPath);
+                return foundAnnotations;
+        }
+
+        out(foundAnnotations);
+        return foundAnnotations;
     }
    
     /**
@@ -285,26 +334,7 @@ component {
     }
 
 
-    // Helper Functions
-    private void function out(any message){
-        if(!isSimpleValue(message)){
-            message = serializeJson(var=message, compact=false);
-        }
-        writeOutput(message & chr(10));
-    }
-
-    function getEnv(String envKeyName, String defaultValue=""){
-        var envValue = SERVER.system.environment[envKeyName];
-        if(isNull(envValue)){
-            return defaultValue;
-        }
-        return envValue;
-    }
-
-    function verbose(any message){
-        if(variables.verboseEnabled){
-            dump(message);
-        }
-    }
+   
+    
 }
         
