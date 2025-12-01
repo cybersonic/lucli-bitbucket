@@ -23,21 +23,21 @@ component {
     function createReport(
         required struct reportData,
         required string commit,
-        string reportSlug="",
+        string reportId=""
         ){
             
-        //TODO: Do a check of the contents of the report
-        if(isEmpty(arguments.reportSlug)){
+        if(isEmpty(arguments.reportId)){
             if(!isEmpty(reportData.title)){
-                arguments.reportSlug = lCase(replace(reportData.title, " ", "_", "all"));
+                arguments.reportId = lCase(replace(reportData.title, " ", "_", "all"));
             }
             else{
-                throw("Report Slug is required if no title is provided");
+                throw("Report ID is required if no title is provided");
             }
         }
-        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#commit#/reports/#arguments.reportSlug#";
 
-        
+
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#commit#/reports/#arguments.reportId#";
+
         var response = doCall(
             path=path,
             method="PUT",
@@ -49,11 +49,11 @@ component {
     function createAnnotations(
         required array annotations,
         required string commit,
-        required string reportSlug
+        required string reportId
 
     ){
-        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#commit#/reports/#reportSlug#/annotations";
-
+        
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#commit#/reports/#arguments.reportId#/annotations";
         // make sure we clean up the annotations to match Bitbucket's expected format
         for(var i=1; i LTE arrayLen(arguments.annotations); i++){
             var annotation = arguments.annotations[i];
@@ -63,7 +63,7 @@ component {
             }
 
             if(NOT annotation.keyExists("external_id")){
-                annotation.external_id = reportSlug & "_" & numberFormat(i, "000");
+                annotation.external_id = reportId & "_" & numberFormat(i, "000");
             }
             // // Bitbucket expects "path" not "file"
             // if(annotation.keyExists("file")){
@@ -112,13 +112,31 @@ component {
         return response;
     }
 
+    function downloadFile(
+        required string fileURL,
+        required string destinationPath
+    ){
 
-    
+        var fileResp = doCall(
+            path=fileURL,
+            method="GET",
+            data={},
+            overrideURL=true
+        );
+        var folder = getDirectoryFromPath(destinationPath);
+        if(NOT directoryExists(folder)){
+            directoryCreate(folder, true);
+        }
 
-    function doCall(required string path, string method="GET", any data)  cachedwithin="request"{
+       
+        fileWrite(destinationPath, fileResp.fileContent);
+        return fileResp.fileContent;
+    } 
 
-		var resourcePath = "https://api.bitbucket.org/2.0/#path#"
-		printGreen(method & ": " & resourcePath);
+    function doCall(required string path, string method="GET", any data, boolean overrideURL=false)  cachedwithin="request"{
+
+		var resourcePath = overrideURL ? path : "https://api.bitbucket.org/2.0/#path#";
+		// printGreen(method & ": " & resourcePath);
 		var useBearer=false;
 		var token="";
 
@@ -134,7 +152,7 @@ component {
 		}
 
 		if(useBearer){
-			printRed("Using Bearer Token");
+			// out("Using Bearer Token", "red");
 			http method="#arguments.method#" url="#resourcePath#"
 				result="local.bitbucketresponse"
 			{
@@ -152,7 +170,8 @@ component {
 				}
 	
 			}
-			printRed(bitbucketresponse);
+			// out("Bitbucket response:", "red");
+			// out(bitbucketresponse, "red");
 		} else {
 			http method="#arguments.method#" url="#resourcePath#"
 				username="#variables.username#" password="#variables.password#"
@@ -174,27 +193,11 @@ component {
 
 		}
 		if(bitbucketresponse.status_code NEQ "200"){
-			printRed(bitbucketresponse);
-			error(bitbucketresponse.errordetail);
+			// printRed(bitbucketresponse);
+			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
+            throw("Bitbucket API call to #resourcePath# failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
 		}
 		return bitbucketresponse;
 	}
 
-
-    function printGreen(any message){
-        out(arguments.message);
-    }
-    function printRed(any message){
-        out(arguments.message);
-    }
-    function error(any message){
-        out(arguments.message);
-    }
-
-    function out(any message){
-         if(!isSimpleValue(message)){
-        message = serializeJson(var=message, compact=false);
-        }
-        // dump(message & chr(10));
-    }
 }

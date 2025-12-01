@@ -7,19 +7,7 @@ component extends="modules.BaseModule" {
      * Implement your module logic in the main() function.
      */
     
-    function init(
-        boolean verboseEnabled=false,
-        boolean timingEnabled=false,
-        string cwd="",
-        any timer
-        ) {
-            variables.verboseEnabled = arguments.verboseEnabled;
-            variables.timingEnabled = arguments.timingEnabled;
-            variables.cwd = arguments.cwd;
-            variables.timer = arguments.timer ?: {};
-        // Module initialization code goes here
-        return this;
-    }
+   
     /*
     Bitbucket Pipelines set the following variables anyway
         Default variables:
@@ -212,8 +200,9 @@ component extends="modules.BaseModule" {
                 // dump(var=lineNum, label="Changed line: " & lineNum);
                 // Now loop through all the annotations to see if they match
                 for(var annotation in reportData.annotations){
-                    out("Annotation real path: " & annotation.path);
+                    // out("Annotation real path: " & annotation.path);
                     var annotationRealPath = Right((annotation.path), Len(annotation.path) - Len(rootPath));
+                    // out("Annotation real path: " & annotationRealPath);
                     if(annotationRealPath NEQ filePath){
                         continue;
                     }
@@ -223,6 +212,7 @@ component extends="modules.BaseModule" {
                         if( lineNum GTE annotation.line AND lineNum LTE annotation.end_line ){
                             // dump(var=annotation, label="FOUND annotation in range " & annotationRealPath & ":" & annotation.line & "-" & annotation.end_line);
                             if(!arrayContains(foundAnnotations, annotation)){
+                                annotation.path = annotationRealPath;
                                 arrayAppend(foundAnnotations, annotation);
                             }
                         }
@@ -230,6 +220,7 @@ component extends="modules.BaseModule" {
                         if( lineNum EQ annotation.line ){
                             // dump(var=annotation, label="FOUND annotation at line " & annotationRealPath & ":" & annotation.line);
                             if(!arrayContains(foundAnnotations, annotation)){
+                                annotation.path = annotationRealPath;
                                 arrayAppend(foundAnnotations, annotation);
                             }
                         }
@@ -238,7 +229,7 @@ component extends="modules.BaseModule" {
             }
             
         }
-        out(foundAnnotations);
+        verbose(foundAnnotations);
 
         if(Len(arguments.outputPath)){
                 // Save to file
@@ -248,10 +239,142 @@ component extends="modules.BaseModule" {
                 return foundAnnotations;
         }
 
-        out(foundAnnotations);
+        verbose(foundAnnotations);
         return foundAnnotations;
     }
+
+
+
+    function downloadPRFiles(numeric pullRequestId = 0, string downloadPath="") {
+        var pullRequestId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+        var prFilesResponse = bitbucket.getPullRequestDiffStat(
+            pullRequestId = pullRequestId
+        );
+
+     
+
+        var prFiles = DeserializeJSON(prFilesResponse.fileContent);
+        var absDownloadPath = getAbsolutePath(variables.cwd, arguments.downloadPath);
+       
+        // // Create download path if it doesn't exist
+        if(!directoryExists(absDownloadPath)){
+            directoryCreate(absDownloadPath, true);
+        }
+
+        for(var fileInfo in prFiles.values){
+            var fileURL = fileInfo.new?.links?.self?.href;
+            var filePath =  fileInfo?.new?.path;
+                verbose( [
+                    "Downloading file: " & filePath,
+                    "From URL: " & fileURL,
+                    "To Path: " & absDownloadPath & "/" & filePath
+                ]);
+
+            if(!Len(fileURL) OR !Len(filePath)){
+                verbose(fileInfo)
+                out("❌ Skipping file due to missing URL or path");
+                continue;
+            }
+          
+
+            var fileContentResponse = bitbucket.downloadFile(
+                fileURL = fileURL,
+                destinationPath = absDownloadPath & "/" & filePath
+            );
+            out("Downloaded file: " & fileURL & " to " & absDownloadPath & "/" & filePath);
+            
+           
+        }
+
+        return "Downloaded " & arrayLen(prFiles.values) & " files to " & absDownloadPath;
+    }
+
+
+    /**
+     * posts a report to bitbuclet from a report formatted json file
+     *
+     * @commit the commit
+     * @reportPath the path to the bitbucket report json file
+     * @reportTitle the title of the report (optional) If not provided, will use the title from the report file
+     */
+    function postReport(
+        required string commit, 
+        required string reportPath, 
+        required string reportID, 
+        string title="",
+        string details=""
+    ) {
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+
+
+        var reportData = deserializeJson(fileRead(reportPath));
+        if(Len(title)){
+            reportData.title = title;
+        }
+        if(Len(details)){
+            reportData.details = details;
+        }
+
+        var response = bitbucket.createReport(
+            reportData = reportData,
+            commit = commit,
+            reportID = reportID
+        );
+        out("Report [#reportID#] created");
+        var bitbucketResponse = DeserializeJSON(response.fileContent);
+        // verbose(response);
+        verbose(bitbucketResponse);
+        return response;
+
+    }
    
+    /**
+     * adds annotations to a report
+     *
+     * @commit the commit
+     * @annotationFile the path to the annotation file with a JSON array of annotations
+     * @reportTitle the title of the report to add the annotations to
+     */
+
+    function postReportAnnotations(required string commit, required string annotationFile, required string reportId) {
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+
+        var annotations = deserializeJson(fileRead(annotationFile));
+        var annotationResponse = bitbucket.createAnnotations(
+            annotations = annotations,
+            commit = commit,
+            reportId = reportId
+        );
+        var annotationResp = DeserializeJSON(annotationResponse.fileContent);
+        // verbose(annotationResp);   
+        out("Annotations added to report [#reportId#]");
+        return annotationResponse;
+    }
+
+
+    private function createCient(){
+
+        // need to check for errors if env vars not set
+        return new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+    }
+
     /**
      * Function to parse a diff file to extract the file and changed lines
      *
@@ -333,8 +456,4 @@ component extends="modules.BaseModule" {
         return result;
     }
 
-
-   
-    
 }
-        
