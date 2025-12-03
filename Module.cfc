@@ -353,6 +353,11 @@ component extends="modules.BaseModule" {
         );
 
         var annotations = deserializeJson(fileRead(annotationFile));
+
+        if(!annotations.len()){
+            out("❌ No annotations found in file: #annotationFile#");
+            return;
+        }
         var annotationResponse = bitbucket.createAnnotations(
             annotations = annotations,
             commit = commit,
