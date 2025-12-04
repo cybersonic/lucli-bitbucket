@@ -155,27 +155,27 @@ component {
 		//change the auth. 
 
 		var bitbucketresponse = {};
-		if(variables.authType EQ BitbucketClient::REPO_BEARER) {
+		// if(variables.authType EQ BitbucketClient::REPO_BEARER) {
 			useBearer=true;
 			token = variables.authToken;
-		} else if(variables.authType EQ BitbucketClient::WORKSPACE_BEARER) {
-			useBearer=true;
-			token = variables.authToken;
-		}
+		// } else if(variables.authType EQ BitbucketClient::WORKSPACE_BEARER) {
+		// 	useBearer=true;
+		// 	token = variables.authToken;
+		// }
 
 
 
-		if(useBearer){
+		// if(useBearer){
 			// out("Using Bearer Token", "red");
 			http method="#arguments.method#" url="#resourcePath#"
 				result="local.bitbucketresponse"
 			{
-	
-				httpparam type="header" name="Authorization" value="Bearer #token#";
-                if(arguments.method NEQ "GET"){
-                    httpparam type="header" name="Accept" value="application/json";
+				httpparam type="header" name="Authorization" value="Bearer #Trim(token)#";
+                if(NOT overrideURL){
+                    httpparam type="header" name="Content-Type" value="application/json";
+
                 }
-				// httpparam type="header" name="Content-Type" value="application/json";
+                
 			
 				if(!isNull(arguments.data) AND method NEQ "GET"){
 					httpparam type="body" value="#SerializeJSON(arguments.data)#";
@@ -185,30 +185,31 @@ component {
 						httpparam type="url" name="#item#" value="#data[item]#";
 					}
 				}
+            }
 	
-			}
+			// }
 			// out("Bitbucket response:", "red");
 			// out(bitbucketresponse, "red");
-		} else {
-			http method="#arguments.method#" url="#resourcePath#"
-				username="#variables.username#" password="#variables.password#"
-				result="local.bitbucketresponse"
-			{
+		// } else {
+		// 	http method="#arguments.method#" url="#resourcePath#"
+		// 		username="#variables.username#" password="#variables.password#"
+		// 		result="local.bitbucketresponse"
+		// 	{
 	
-				httpparam type="header" name="Content-Type" value="application/json";
+		// 		httpparam type="header" name="Content-Type" value="application/json";
 			
-				if(!isNull(arguments.data) AND method NEQ "GET"){
-					httpparam type="body" value="#SerializeJSON(arguments.data)#";
-				}
-				if(!isNull(arguments.data) AND method EQ "GET"){
-					for(var item in data){
-						httpparam type="url" name="#item#" value="#data[item]#";
-					}
-				}
+		// 		if(!isNull(arguments.data) AND method NEQ "GET"){
+		// 			httpparam type="body" value="#SerializeJSON(arguments.data)#";
+		// 		}
+		// 		if(!isNull(arguments.data) AND method EQ "GET"){
+		// 			for(var item in data){
+		// 				httpparam type="url" name="#item#" value="#data[item]#";
+		// 			}
+		// 		}
 	
-			}
+		// 	}
 
-		}
+		// }
 		if(bitbucketresponse.status_code NEQ "200"){
 			// printRed(bitbucketresponse);
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
