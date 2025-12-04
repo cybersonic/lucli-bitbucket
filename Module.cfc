@@ -267,8 +267,14 @@ component extends="modules.BaseModule" {
         }
 
         for(var fileInfo in prFiles.values){
+
+            
             var fileURL = fileInfo.new?.links?.self?.href;
+            if(fileInfo.status EQ "removed"){
+                continue;
+            }
             var filePath =  fileInfo?.new?.path;
+
                 verbose( [
                     "Downloading file: " & filePath,
                     "From URL: " & fileURL,
@@ -281,12 +287,17 @@ component extends="modules.BaseModule" {
                 continue;
             }
           
-
-            var fileContentResponse = bitbucket.downloadFile(
-                fileURL = fileURL,
-                destinationPath = absDownloadPath & "/" & filePath
-            );
-            out("Downloaded file: " & fileURL & " to " & absDownloadPath & "/" & filePath);
+            try{
+                var fileContentResponse = bitbucket.downloadFile(
+                    fileURL = fileURL,
+                    destinationPath = absDownloadPath & "/" & filePath
+                );
+                out("Downloaded file: " & fileURL & " to " & absDownloadPath & "/" & filePath);
+                
+            }
+            catch (ex) {
+                out("❌ Error downloading file: " & fileURL & " - " & ex.message);
+            }
             
            
         }

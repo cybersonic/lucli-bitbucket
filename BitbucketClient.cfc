@@ -133,10 +133,22 @@ component {
         return fileResp.fileContent;
     } 
 
+    function getRepository(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#";
+
+        var response = doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+        return response;
+    }
+
     function doCall(required string path, string method="GET", any data, boolean overrideURL=false)  cachedwithin="request"{
 
 		var resourcePath = overrideURL ? path : "https://api.bitbucket.org/2.0/#path#";
 		// printGreen(method & ": " & resourcePath);
+            resourcePath = Trim(resourcePath);
 		var useBearer=false;
 		var token="";
 
@@ -158,7 +170,7 @@ component {
 			{
 	
 				httpparam type="header" name="Authorization" value="Bearer #token#";
-				httpparam type="header" name="Content-Type" value="application/json";
+				// httpparam type="header" name="Content-Type" value="application/json";
 			
 				if(!isNull(arguments.data) AND method NEQ "GET"){
 					httpparam type="body" value="#SerializeJSON(arguments.data)#";
@@ -195,7 +207,7 @@ component {
 		if(bitbucketresponse.status_code NEQ "200"){
 			// printRed(bitbucketresponse);
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
-            throw("Bitbucket API call to #resourcePath# failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
+            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#token#] failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
 		}
 		return bitbucketresponse;
 	}
