@@ -163,6 +163,8 @@ component {
 			token = variables.authToken;
 		}
 
+
+
 		if(useBearer){
 			// out("Using Bearer Token", "red");
 			http method="#arguments.method#" url="#resourcePath#"
@@ -170,6 +172,9 @@ component {
 			{
 	
 				httpparam type="header" name="Authorization" value="Bearer #token#";
+                if(arguments.method NEQ "GET"){
+                    httpparam type="header" name="Accept" value="application/json";
+                }
 				// httpparam type="header" name="Content-Type" value="application/json";
 			
 				if(!isNull(arguments.data) AND method NEQ "GET"){
