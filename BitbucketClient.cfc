@@ -207,7 +207,8 @@ component {
 		if(bitbucketresponse.status_code NEQ "200"){
 			// printRed(bitbucketresponse);
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
-            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#token#] failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
+            var outtoken = Len(token) GT 10 ? Left(token , 10) & "..." : "xxxxx";
+            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#outtoken#] failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
 		}
 		return bitbucketresponse;
 	}
