@@ -1,15 +1,13 @@
         
+/**
+ * Module component for Bitbucket integration.
+ *
+ * @extends modules.BaseModule
+ */
 component extends="modules.BaseModule" {
-    /**
-     * bitbucket Module
-     * 
-     * This is the main entry point for your module.
-     * Implement your module logic in the main() function.
-     */
-    
-   
-    /*
-    Bitbucket Pipelines set the following variables anyway
+
+        /*
+        Bitbucket Pipelines set the following variables anyway
         Default variables:
             BITBUCKET_BRANCH
             BITBUCKET_BUILD_NUMBER
@@ -38,7 +36,7 @@ component extends="modules.BaseModule" {
             BITBUCKET_WORKSPACE
             CI
             DOCKER_HOST
-    */
+        */
     function main(string action="") {
 
         var possibleActions = ["createReport", "createAnnotations", "getPullRequestDiff"];
@@ -119,6 +117,7 @@ component extends="modules.BaseModule" {
      * Returns the Diff text of a pull request
      *
      * @pullRequestId The id of the pull request
+     * @outputPath Optional path to save the diff to a file
      */
     function getPullRequestDiff(
         numeric pullRequestId = 0,
@@ -245,6 +244,13 @@ component extends="modules.BaseModule" {
 
 
 
+    /**
+     * Downloads the files associated with a specified pull request to a local path.
+     *
+     * @pullRequestId The ID of the pull request to download files for.
+     * @downloadPath The local directory where files should be downloaded.
+     * @return void
+     */
     function downloadPRFiles(numeric pullRequestId = 0, string downloadPath="") {
         var pullRequestId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
         var bitbucket = new BitbucketClient(
@@ -266,6 +272,15 @@ component extends="modules.BaseModule" {
             directoryCreate(absDownloadPath, true);
         }
 
+        // output how many files to download and the list:
+        for(var fileInfo in prFiles.values) {     
+            out("File to download: " & fileInfo?.new?.path & " (status: " & fileInfo.status & ")");
+        }
+        out("Downloading " & arrayLen(prFiles.values) & " files to " & absDownloadPath);
+
+
+        
+        var count = 0;
         for(var fileInfo in prFiles.values){
 
             
@@ -292,18 +307,170 @@ component extends="modules.BaseModule" {
                     fileURL = fileURL,
                     destinationPath = absDownloadPath & "/" & filePath
                 );
-                out("Downloaded file: " & fileURL & " to " & absDownloadPath & "/" & filePath);
-                
+                var msg = "Downloaded file: " & fileURL & " to " & absDownloadPath & "/" & filePath
+                out(msg);
+                count++;
+               
             }
             catch (ex) {
                 out("❌ Error downloading file: " & fileURL & " - " & ex.message);
             }
             
-           
+
         }
 
         return "Downloaded " & arrayLen(prFiles.values) & " files to " & absDownloadPath;
     }
+
+    /**
+     * Retrieves a pull request by its identifier from the configured Bitbucket repository.
+     *
+     * @id The pull request ID to retrieve.
+     * @fields An optional list of fields to include in the response.
+     * @outputPath Optional path to save the pull request details to a file
+     * @return The pull request details as a struct.
+     */
+    function getPullRequest(
+        numeric pullRequestId = 0,
+        String fields = "",
+        String outputPath=""
+        ){
+        var pullRequestId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+
+        var resp = bitbucket.getPullRequest(
+            pullRequestId = pullRequestId,
+            fields = fields
+        );
+
+        if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            // Save to file
+            fileWrite(absOutputPath, resp.fileContent);
+            out("Pull Request written to: " & absOutputPath);
+            return;
+        }
+        else{
+            out(resp.fileContent);
+        }
+        return resp.fileContent;
+    }
+
+
+
+    /**
+     * Add reviewers to a pull request. 
+     *
+     * @pullRequestId the ID of the pull request to which reviewers will be added.
+     * @reviewerUuids a list of reviewer UUIDs to add. Reviewer UUIDs should be in the format "{uuid}"
+     */
+    function addReviewers(
+        required string pullRequestId,
+        required string reviewerUuids
+        ){
+
+        // Move this to the bitbucket object!
+      
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+
+        var originalPullRequest = bitbucket.getPullRequest(
+            pullRequestId = arguments.pullRequestId,
+            fields= "reviewers"
+        );
+
+        var prData = DeserializeJSON(originalPullRequest.fileContent);
+
+        if(!structKeyExists(prData, "reviewers")){
+            prData["reviewers"] = [];
+        }
+
+        var reviewerUuidsArray = listToArray(arguments.reviewerUuids, ",");
+
+        for(var reviewerUuid in reviewerUuidsArray){
+            // Check if reviewer already exists
+            var alreadyReviewer = false;
+            for(var existingReviewer in prData.reviewers){
+                if(existingReviewer.uuid EQ reviewerUuid){
+                    alreadyReviewer = true;
+                    break;
+                }
+            }
+            if(alreadyReviewer){
+                out("Reviewer " & reviewerUuid & " already exists on pull request " & pullRequestId);
+                continue;
+            }
+            arrayAppend(prData.reviewers, {"uuid"=reviewerUuid});
+        }
+        out("Updating pull request " & pullRequestId & " with reviewers: " & arrayToList(reviewerUuidsArray));
+
+        var resp = bitbucket.putPullRequest(
+            pullRequestId = arguments.pullRequestId,
+            data=prData
+        );
+        return resp;
+    }
+
+
+
+    /**
+     * Downloads a file from a given URL to a specified local destination.
+     *
+     * @fileURL The URL of the file to download.
+     * @destinationPath The local path where the file should be saved.
+     * @return The content of the downloaded file.
+     */
+    function downloadFile(
+        required string fileURL,
+        required string destinationPath
+        ){
+          var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+        try{
+                var destPath = getAbsolutePath(variables.cwd, arguments.destinationPath);
+                var folder = getDirectoryFromPath(destPath);
+                var fileContentResponse = bitbucket.downloadFile(
+                    fileURL = fileURL,
+                    destinationPath = destPath
+                );
+                out("Downloaded file: " & fileURL & " to " & destinationPath);
+                
+            }
+            catch (ex) {
+                out("❌ Error downloading file: " & fileURL & " - " & ex.message);
+            }
+        return "Downloaded file: " & fileURL & " to " & destinationPath;
+    }
+
+    /**
+     * Simple Helper to convert a yaml file to JSON
+     *
+     * @filePath The path to the yaml file
+     */
+    function convertYamlToJson(required string filePath, string outputPath="") {
+        var yamlReader = new YAML2CFML();
+         var yamlData = yamlReader.read(filePath);
+       
+        if(Len(arguments.outputPath)){
+            var absPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            var jsonData = serializeJson(yamlData, true);
+            fileWrite(absPath, jsonData);
+            out("YAML converted to JSON and written to: " & absPath);
+            return;
+        }
+        return yamlData;
+    }
+
 
 
     /**
@@ -319,7 +486,7 @@ component extends="modules.BaseModule" {
         required string reportID, 
         string title="",
         string details=""
-    ) {
+        ) {
         var bitbucket = new BitbucketClient(
             repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
             workspace = getEnv("BITBUCKET_WORKSPACE", ""),
@@ -381,6 +548,11 @@ component extends="modules.BaseModule" {
     }
 
 
+    /**
+     * Creates and returns a client instance for the Bitbucket module.
+     *
+     * @return any The initialized client object.
+     */
     private function createCient(){
 
         // need to check for errors if env vars not set

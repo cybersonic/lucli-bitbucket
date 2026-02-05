@@ -85,6 +85,31 @@ component {
         return response;
     }
 
+    /**
+     * getPullRequest
+     * returns details about a specific pull request
+     *
+     * @pullRequestId The ID of the pull request to retrieve.
+     * @fields Array Optional fields to include in the response (see https://developer.atlassian.com/cloud/bitbucket/rest/intro/#partial-response)
+     */
+    function getPullRequest(
+        required numeric pullRequestId,
+        string fields=""
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/";
+
+        if(listLen(arguments.fields) GT 0){
+            var fieldParam = arguments.fields;
+            path = path & "?fields=" & URLEncodedFormat(arguments.fields);
+        }
+
+        var response = doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+        return response;
+    }
     function getPullRequestDiffStat(
         required numeric pullRequestId
     ){
@@ -108,6 +133,20 @@ component {
             path=path,
             method="GET",
             data={}
+        );
+        return response;
+    }
+
+    function putPullRequest(
+        required numeric pullRequestId,
+        required struct data
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/";
+
+        var response = doCall(
+            path=path,
+            method="PUT",
+            data=arguments.data
         );
         return response;
     }
@@ -212,6 +251,7 @@ component {
 		// }
 		if(bitbucketresponse.status_code NEQ "200"){
 			// printRed(bitbucketresponse);
+            
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
             var outtoken = Len(token) GT 10 ? Left(token , 10) & "..." : "xxxxx";
             throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#outtoken#] failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
