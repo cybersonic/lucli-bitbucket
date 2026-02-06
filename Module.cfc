@@ -205,6 +205,14 @@ component extends="modules.BaseModule" {
                     if(annotationRealPath NEQ filePath){
                         continue;
                     }
+                    // if we dont have a annotation.line this applies to the whole file, so we include it
+                    if(!structKeyExists(annotation, "line")){
+                        annotation.path = annotationRealPath;
+                        if(!arrayContains(foundAnnotations, annotation)){
+                            arrayAppend(foundAnnotations, annotation);
+                        }
+                        continue;
+                    }
                     // dump(var=annotation, label="Checking annotation " & annotationRealPath & ":" & annotation.line);
                     // If we have an end_line, check the range
                     if( structKeyExists(annotation, "end_line") ){
