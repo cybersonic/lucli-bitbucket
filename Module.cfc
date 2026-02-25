@@ -39,7 +39,7 @@ component extends="modules.BaseModule" {
         */
     function main(string action="") {
 
-        var possibleActions = ["createReport", "createAnnotations", "getPullRequestDiff"];
+        var possibleActions = ["createReport", "createAnnotations", "getPullRequestDiff", "addPullRequestTask"];
         if(!arrayContains(possibleActions, arguments.action)){
             out("❌ Unknown action: " & action);
             out("Available actions: " & arrayToList(possibleActions));
@@ -103,6 +103,16 @@ component extends="modules.BaseModule" {
                 out("Pull Request Diff:");
                 var prDiffStat = DeserializeJSON(diffStatResponse.fileContent);
                 out(prDiffStat);
+                break;
+            case "addPullRequestTask":
+                arguments["pullRequestId"] = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+                var taskResponse = bitbucket.addPullRequestTask(
+                    pullRequestId = arguments.pullRequestId,
+                    taskContent = arguments.taskContent
+                );
+                out("Task added to pull request:");
+                var taskResult = DeserializeJSON(taskResponse.fileContent);
+                out(taskResult);
                 break;
             default:
                 out("❌ Action not implemented: #arguments.action#");
@@ -426,6 +436,29 @@ component extends="modules.BaseModule" {
         return resp;
     }
 
+
+    /**
+     * Adds a task to a pull request.
+     *
+     * @pullRequestId The ID of the pull request.
+     * @taskContent   The text content of the task to create.
+     * @return The API response (task created).
+     */
+    function addPullRequestTask(
+        numeric pullRequestId = 0,
+        required string taskContent
+    ){
+        var pullRequestId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
+        var bitbucket = new BitbucketClient(
+            repoSlug = getEnv("BITBUCKET_REPO_SLUG", ""),
+            workspace = getEnv("BITBUCKET_WORKSPACE", ""),
+            authToken = getEnv("BITBUCKET_AUTH_TOKEN", "")
+        );
+        return bitbucket.addPullRequestTask(
+            pullRequestId = pullRequestId,
+            taskContent = arguments.taskContent
+        );
+    }
 
 
     /**

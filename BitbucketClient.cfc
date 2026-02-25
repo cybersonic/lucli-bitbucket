@@ -183,6 +183,27 @@ component {
         return response;
     }
 
+    /**
+     * addPullRequestTask
+     * Adds a task to a pull request
+     *
+     * @pullRequestId The ID of the pull request
+     * @taskContent   The text content of the task to create
+     */
+    function addPullRequestTask(
+        required numeric pullRequestId,
+        required string taskContent
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks/";
+
+        var response = doCall(
+            path=path,
+            method="POST",
+            data={"content": {"raw": arguments.taskContent}}
+        );
+        return response;
+    }
+
     function doCall(required string path, string method="GET", any data, boolean overrideURL=false)  cachedwithin="request"{
 
 		var resourcePath = overrideURL ? path : "https://api.bitbucket.org/2.0/#path#";
@@ -249,7 +270,7 @@ component {
 		// 	}
 
 		// }
-		if(bitbucketresponse.status_code NEQ "200"){
+		if(NOT listFind("200,201", bitbucketresponse.status_code)){
 			// printRed(bitbucketresponse);
             
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
