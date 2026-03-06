@@ -9,16 +9,28 @@ It is desgined to run within a bitbucket pipeline using the environment variable
 
 ```bash
 # submit a report to bitbucket (it uses a json with annotations to also submit the annotations)
-lucli bitbucket createReport file=report.json 
+lucli bitbucket createReport commit=$BITBUCKET_COMMIT file=report.json
 
-# Looks for the annotations in the report under the `annotations` 
-lucli bitbucket createAnnotations file=report.json
-# Get the diff for a pull request , used with the filterAnnotationsInDiff action
-lucli bitbucket getPullRequestDiff pullRequestId=123
+# Looks for the annotations in the report under the `annotations`
+lucli bitbucket createAnnotations commit=$BITBUCKET_COMMIT reportId=my_report file=report.json
 
-# return a filtered report with only the annotations that are in the diff
+# Get the diff for a pull request (used with filterAnnotationsInDiff)
+lucli bitbucket pullrequests_diff pullRequestId=123 outputPath=diff.txt
+
+# Return only the annotations that are in the diff
 lucli bitbucket filterAnnotationsInDiff reportPath=report.json diffFilePath=diff.txt
 
+# Weekly release context (no git clone required)
+# Produces JSON suitable to send to Oz/Warp for summarization.
+lucli bitbucket weeklyReleaseContext \
+  branch=main \
+  sinceISO=2026-03-01T00:00:00Z \
+  untilISO=2026-03-08T00:00:00Z \
+  includeDiffstat=true \
+  includeCommits=false
+
+# List tags (useful if you later want to key off revision-* tags)
+lucli bitbucket refs_tags q='name~"revision-"'
 ```
 
 ## Description

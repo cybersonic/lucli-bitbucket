@@ -86,14 +86,24 @@ component {
     }
 
     function getPullRequestDiffStat(
-        required numeric pullRequestId
+        required numeric pullRequestId,
+        numeric page=0,
+        numeric pagelen=0
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/diffstat";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
 
         var response = doCall(
             path=path,
             method="GET",
-            data={}
+            data=params
         );
         return response;
     }
@@ -112,16 +122,431 @@ component {
         return response;
     }
 
+    function getPullRequestPatch(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/patch";
+
+        var response = doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+        return response;
+    }
+
+    function listPullRequests(
+        string state="",
+        string q="",
+        string sort="",
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests";
+
+        var params = {};
+        if(Len(arguments.state)){
+            params.state = arguments.state;
+        }
+        if(Len(arguments.q)){
+            params.q = arguments.q;
+        }
+        if(Len(arguments.sort)){
+            params.sort = arguments.sort;
+        }
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function getPullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPullRequest(
+        required struct pullRequestData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=pullRequestData
+        );
+    }
+
+    function updatePullRequest(
+        required numeric pullRequestId,
+        required struct pullRequestData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=pullRequestData
+        );
+    }
+
+    function declinePullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/decline";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data={}
+        );
+    }
+
+    function mergePullRequest(
+        required numeric pullRequestId,
+        struct mergeData={}
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/merge";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=mergeData
+        );
+    }
+
+    function getPullRequestMergeTaskStatus(
+        required numeric pullRequestId,
+        required string taskId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/merge/task-status/#arguments.taskId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function approvePullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/approve";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data={}
+        );
+    }
+
+    function unapprovePullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/approve";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function requestChangesPullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/request-changes";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data={}
+        );
+    }
+
+    function removeRequestChangesPullRequest(
+        required numeric pullRequestId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/request-changes";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPullRequestActivity(
+        required numeric pullRequestId,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/activity";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function listPullRequestCommits(
+        required numeric pullRequestId,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/commits";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function listPullRequestComments(
+        required numeric pullRequestId,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function createPullRequestComment(
+        required numeric pullRequestId,
+        required struct commentData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=commentData
+        );
+    }
+
+    function getPullRequestComment(
+        required numeric pullRequestId,
+        required numeric commentId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments/#commentId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePullRequestComment(
+        required numeric pullRequestId,
+        required numeric commentId,
+        required struct commentData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments/#commentId#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=commentData
+        );
+    }
+
+    function deletePullRequestComment(
+        required numeric pullRequestId,
+        required numeric commentId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments/#commentId#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPullRequestTasks(
+        required numeric pullRequestId,
+        string q="",
+        string sort="",
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks";
+
+        var params = {};
+        if(Len(arguments.q)){
+            params.q = arguments.q;
+        }
+        if(Len(arguments.sort)){
+            params.sort = arguments.sort;
+        }
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function createPullRequestTask(
+        required numeric pullRequestId,
+        required struct taskData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=taskData
+        );
+    }
+
+    function getPullRequestTask(
+        required numeric pullRequestId,
+        required numeric taskId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks/#taskId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePullRequestTask(
+        required numeric pullRequestId,
+        required numeric taskId,
+        required struct taskData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks/#taskId#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=taskData
+        );
+    }
+
+    function deletePullRequestTask(
+        required numeric pullRequestId,
+        required numeric taskId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/tasks/#taskId#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPullRequestsForCommit(
+        required string commit,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#commit#/pullrequests";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function listDefaultReviewers(
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/default-reviewers";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
     function downloadFile(
         required string fileURL,
         required string destinationPath
     ){
 
-        var fileResp = doCall(
+        var fileContent = doCall(
             path=fileURL,
             method="GET",
             data={},
-            overrideURL=true
+            overrideURL=true,
+            parseResponse=false
         );
         var folder = getDirectoryFromPath(destinationPath);
         if(NOT directoryExists(folder)){
@@ -129,9 +554,72 @@ component {
         }
 
        
-        fileWrite(destinationPath, fileResp.fileContent);
-        return fileResp.fileContent;
+        fileWrite(destinationPath, fileContent);
+        return fileContent;
     } 
+
+    function getBranchRef(
+        required string branch
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/refs/branches/#arguments.branch#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function listCommits(
+        required string revision,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commits/#arguments.revision#";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function listTags(
+        string q="",
+        string sort="",
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/refs/tags";
+
+        var params = {};
+        if(Len(arguments.q)){
+            params.q = arguments.q;
+        }
+        if(Len(arguments.sort)){
+            params.sort = arguments.sort;
+        }
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
 
     function getRepository(){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#";
@@ -144,7 +632,7 @@ component {
         return response;
     }
 
-    function doCall(required string path, string method="GET", any data, boolean overrideURL=false)  cachedwithin="request"{
+    function doCall(required string path, string method="GET", any data={}, boolean overrideURL=false, boolean parseResponse=true){
 
 		var resourcePath = overrideURL ? path : "https://api.bitbucket.org/2.0/#path#";
 		// printGreen(method & ": " & resourcePath);
@@ -163,7 +651,21 @@ component {
 		// 	token = variables.authToken;
 		// }
 
-
+            var sendBody = false;
+            if(!isNull(arguments.data) AND method NEQ "GET"){
+                if(isStruct(arguments.data)){
+                    sendBody = !structIsEmpty(arguments.data);
+                }
+                else if(isArray(arguments.data)){
+                    sendBody = arrayLen(arguments.data) GT 0;
+                }
+                else if(isSimpleValue(arguments.data)){
+                    sendBody = Len(arguments.data & "") GT 0;
+                }
+                else {
+                    sendBody = true;
+                }
+            }
 
 		// if(useBearer){
 			// out("Using Bearer Token", "red");
@@ -177,7 +679,7 @@ component {
                 }
                 
 			
-				if(!isNull(arguments.data) AND method NEQ "GET"){
+				if(sendBody){
 					httpparam type="body" value="#SerializeJSON(arguments.data)#";
 				}
 				if(!isNull(arguments.data) AND method EQ "GET"){
@@ -210,13 +712,26 @@ component {
 		// 	}
 
 		// }
-		if(bitbucketresponse.status_code NEQ "200"){
+		var statusCode = bitbucketresponse.status_code & "";
+		if(Len(statusCode) EQ 0 OR left(statusCode, 1) NEQ "2"){
 			// printRed(bitbucketresponse);
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
             var outtoken = Len(token) GT 10 ? Left(token , 10) & "..." : "xxxxx";
-            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#outtoken#] failed with status code #bitbucketresponse.status_code# and response: #bitbucketresponse.fileContent#");
+            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#outtoken#] failed with status code #statusCode# and response: #bitbucketresponse.fileContent#");
 		}
-		return bitbucketresponse;
+
+        // Return raw response content.
+        // For now, we return JSON responses as *strings* ("bare JSON") instead of
+        // deserializing into CFML structs/arrays. This keeps module output pipe-friendly
+        // (e.g. to jq) until LuCLI implements a global --format.
+        var content = bitbucketresponse.fileContent;
+        if(isNull(content) OR !Len(trim(content & ""))){
+            return "";
+        }
+
+        // parseResponse=false is used for endpoints where we must guarantee raw bytes/text
+        // (e.g. downloads). With parseResponse=true, we still return the raw string.
+        return content;
 	}
 
 }
