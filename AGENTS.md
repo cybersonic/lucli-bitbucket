@@ -58,6 +58,16 @@ When implementing a new REST endpoint:
 - Do not remove/rename existing public commands without providing an alias wrapper.
 - Keep existing “legacy” functions working (`createReport`, `createAnnotations`, etc.).
 
+
+
+## Testing 
+- Always write a test before implementing a new feature.
+- Tests should be written in the `tests/specs` directory.
+- Tests should be named like `<feature_name>Spec.cfc`.
+- Tests should be written using the `testbox` framework.
+- Tests can be run directly by starting the server using `lucli server start` and then running `http://localhost:8001/tests/`
+- Mocking is supported by using the `testbox` framework.
+
 ## Footguns / notes
 - Do not use the variable name `client` in CFML code.
   - `client` is a built-in CFML scope (client storage). In some runtimes it may be disabled, and references like `client.foo` will error.

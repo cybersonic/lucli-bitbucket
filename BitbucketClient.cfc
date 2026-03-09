@@ -88,7 +88,8 @@ component {
     function getPullRequestDiffStat(
         required numeric pullRequestId,
         numeric page=0,
-        numeric pagelen=0
+        numeric pagelen=0,
+        string fields=""
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/diffstat";
 
@@ -98,6 +99,9 @@ component {
         }
         if(arguments.pagelen GT 0){
             params.pagelen = arguments.pagelen;
+        }
+        if(Len(arguments.fields)){
+            params.fields = arguments.fields;
         }
 
         var response = doCall(
@@ -140,7 +144,8 @@ component {
         string q="",
         string sort="",
         numeric page=0,
-        numeric pagelen=0
+        numeric pagelen=0,
+        string fields=""
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests";
 
@@ -159,6 +164,9 @@ component {
         }
         if(arguments.pagelen GT 0){
             params.pagelen = arguments.pagelen;
+        }
+        if(Len(arguments.fields)){
+            params.fields = arguments.fields;
         }
 
         return doCall(
@@ -316,7 +324,8 @@ component {
     function listPullRequestCommits(
         required numeric pullRequestId,
         numeric page=0,
-        numeric pagelen=0
+        numeric pagelen=0,
+        string fields=""
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/commits";
 
@@ -326,6 +335,9 @@ component {
         }
         if(arguments.pagelen GT 0){
             params.pagelen = arguments.pagelen;
+        }
+        if(Len(arguments.fields)){
+            params.fields = arguments.fields;
         }
 
         return doCall(

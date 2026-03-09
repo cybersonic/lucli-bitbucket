@@ -759,6 +759,8 @@ component extends="modules.BaseModule" {
         string untilISO="",
         boolean includeDiffstat=true,
         boolean includeCommits=false,
+        string mode="detailed",
+        boolean includeBaseHead=false,
         numeric maxPRs=200,
         numeric prPageLen=50,
         numeric childPageLen=100,
@@ -770,6 +772,16 @@ component extends="modules.BaseModule" {
         string format="json"
     ){
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
+        var modeNorm = lCase(trim(arguments.mode));
+        if(modeNorm NEQ "fast" AND modeNorm NEQ "detailed"){
+            modeNorm = "detailed";
+        }
+        var shouldIncludeDiffstat = arguments.includeDiffstat;
+        var shouldIncludeCommits = arguments.includeCommits;
+        if(modeNorm EQ "fast"){
+            shouldIncludeDiffstat = false;
+            shouldIncludeCommits = false;
+        }
 
         // Robust ISO8601 parsing.
         // Primary: Lucee/CFML's parseDateTime(), which typically handles `...Z` and `...+00:00`.
@@ -780,7 +792,6 @@ component extends="modules.BaseModule" {
         function isoToEpochMillis(required string iso){
             try {
                 var d = parseDateTime(arguments.iso);
-                // In Lucee, dates are typically backed by java.util.Date.
                 return d.getTime();
             } catch(any e0){
                 // ignore
@@ -809,76 +820,73 @@ component extends="modules.BaseModule" {
 
         var sinceMs = isoToEpochMillis(arguments.sinceISO);
         var untilMs = isoToEpochMillis(arguments.untilISO);
-
         if(sinceMs EQ 0 OR untilMs EQ 0){
             throw("sinceISO/untilISO must be ISO8601 (e.g. 2026-03-01T00:00:00Z). Got sinceISO='#arguments.sinceISO#' untilISO='#arguments.untilISO#'.");
         }
+        if(untilMs LT sinceMs){
+            throw("untilISO must be >= sinceISO. Got sinceISO='#arguments.sinceISO#' untilISO='#arguments.untilISO#'.");
+        }
 
-        // Resolve branch head + a base commit (last commit before since boundary)
-        // so reports can display: Base -> Head.
         var headSha = "";
         var baseSha = "";
 
-        try {
-            var brStr = bb.getBranchRef(branch=arguments.branch);
-            if(isSimpleValue(brStr) AND isJSON(brStr)){
-                var br = deserializeJson(brStr);
-                headSha = br.target?.hash ?: "";
+        // Optional, disabled by default for PR-window reporting performance.
+        if(arguments.includeBaseHead){
+            try {
+                var brStr = bb.getBranchRef(branch=arguments.branch);
+                if(isSimpleValue(brStr) AND isJSON(brStr)){
+                    var br = deserializeJson(brStr);
+                    headSha = br.target?.hash ?: "";
+                }
+            } catch(any e){
+                // ignore; we'll leave head/base blank if unavailable
             }
-        } catch(any e){
-            // ignore; we'll leave head/base blank if unavailable
-        }
 
-        // Find base commit by walking commits on the branch until we pass sinceMs.
-        // This is typically a small number of pages for a weekly window.
-        if(Len(headSha)){
-            var cPage = 1;
-            var maxPages = 25; // safety
-            while(cPage LTE maxPages AND !Len(baseSha)){
-                var cStr = bb.listCommits(revision=arguments.branch, page=cPage, pagelen=100);
-                if(!isSimpleValue(cStr) OR !isJSON(cStr)){
-                    break;
-                }
-                var cs = deserializeJson(cStr);
-                if(!isStruct(cs) OR !structKeyExists(cs, "values") OR !isArray(cs.values) OR arrayLen(cs.values) EQ 0){
-                    break;
-                }
-
-                for(var cv in cs.values){
-                    var dStr = cv.date ?: "";
-                    var dMs = Len(dStr) ? isoToEpochMillis(dStr) : 0;
-                    if(dMs GT 0 AND dMs LT sinceMs){
-                        baseSha = cv.hash ?: "";
+            if(Len(headSha)){
+                var cPage = 1;
+                var maxPages = 25; // safety
+                while(cPage LTE maxPages AND !Len(baseSha)){
+                    var cStr = bb.listCommits(revision=arguments.branch, page=cPage, pagelen=100);
+                    if(!isSimpleValue(cStr) OR !isJSON(cStr)){
                         break;
                     }
-                }
+                    var cs = deserializeJson(cStr);
+                    if(!isStruct(cs) OR !structKeyExists(cs, "values") OR !isArray(cs.values) OR arrayLen(cs.values) EQ 0){
+                        break;
+                    }
 
-                if(Len(baseSha)){
-                    break;
-                }
+                    for(var cv in cs.values){
+                        var dStr = cv.date ?: "";
+                        var dMs = Len(dStr) ? isoToEpochMillis(dStr) : 0;
+                        if(dMs GT 0 AND dMs LT sinceMs){
+                            baseSha = cv.hash ?: "";
+                            break;
+                        }
+                    }
 
-                if(!structKeyExists(cs, "next")){
-                    break;
+                    if(Len(baseSha) OR !structKeyExists(cs, "next")){
+                        break;
+                    }
+                    cPage++;
                 }
-
-                cPage++;
             }
         }
 
-        var qFilter = 'destination.branch.name="' & arguments.branch & '"';
+        var qFilter = 'destination.branch.name="' & arguments.branch & '" AND closed_on >= "' & arguments.sinceISO & '" AND closed_on <= "' & arguments.untilISO & '"';
+        var prFields = "next,values.id,values.title,values.state,values.closed_on,values.updated_on,values.author.display_name,values.source.branch.name,values.destination.branch.name,values.merge_commit.hash,values.links.html.href,values.summary.raw,values.description";
+        var diffstatFields = "next,values.lines_added,values.lines_removed,values.new.path,values.old.path";
+        var commitFields = "next,values.hash,values.date,values.message,values.author.user.display_name,values.author.raw";
 
         var collected = [];
         var page = 1;
-
-        // Pull MERGED PRs sorted by close time (approx merge time) so comments/updates after merge
-        // do not distort pagination/stop conditions.
         while(arrayLen(collected) LT Int(arguments.maxPRs)){
             var resStr = bb.listPullRequests(
                 state="MERGED",
                 q=qFilter,
                 sort="-closed_on",
                 page=page,
-                pagelen=Int(arguments.prPageLen)
+                pagelen=Int(arguments.prPageLen),
+                fields=prFields
             );
 
             if(!isSimpleValue(resStr) OR !isJSON(resStr)){
@@ -890,29 +898,10 @@ component extends="modules.BaseModule" {
                 break;
             }
 
-            var lastClosedMsInPage = 0;
-
             for(var pr in res.values){
-                // For MERGED PRs, closed_on is the best proxy for merge time.
                 var mergedOn = pr.closed_on ?: pr.updated_on;
                 var mergedMs = Len(mergedOn) ? isoToEpochMillis(mergedOn) : 0;
-
-                // Track stop condition using closed_on primarily.
-                var closedOn = pr.closed_on ?: pr.updated_on;
-                var closedMs = Len(closedOn) ? isoToEpochMillis(closedOn) : 0;
-                lastClosedMsInPage = closedMs;
-
-                if(mergedMs EQ 0){
-                    continue;
-                }
-
-                if(mergedMs LT sinceMs){
-                    // Older than window.
-                    continue;
-                }
-
-                if(mergedMs GT untilMs){
-                    // Newer than window.
+                if(mergedMs EQ 0 OR mergedMs LT sinceMs OR mergedMs GT untilMs){
                     continue;
                 }
 
@@ -922,19 +911,13 @@ component extends="modules.BaseModule" {
                 }
             }
 
-            // Stop once the page is older than our sinceMs
-            if(lastClosedMsInPage GT 0 AND lastClosedMsInPage LT sinceMs){
+            if(!structKeyExists(res, "next")){
                 break;
             }
-
-            // Next page if present.
             page++;
         }
 
-        // Build PR contexts.
         var prContexts = [];
-
-        // Aggregates
         var totals = {
             pr_count = arrayLen(collected),
             unique_authors = {},
@@ -962,7 +945,7 @@ component extends="modules.BaseModule" {
                 totals.unique_authors[prCtx.author] = true;
             }
 
-            if(arguments.includeDiffstat){
+            if(shouldIncludeDiffstat){
                 var diffValues = [];
                 var dsPage = 1;
 
@@ -970,7 +953,8 @@ component extends="modules.BaseModule" {
                     var dsStr = bb.getPullRequestDiffStat(
                         pullRequestId=pr.id,
                         page=dsPage,
-                        pagelen=Int(arguments.childPageLen)
+                        pagelen=Int(arguments.childPageLen),
+                        fields=diffstatFields
                     );
                     if(!isSimpleValue(dsStr) OR !isJSON(dsStr)){
                         break;
@@ -986,16 +970,12 @@ component extends="modules.BaseModule" {
                             break;
                         }
                     }
-
-                    // If no next page, stop.
                     if(!structKeyExists(ds, "next")){
                         break;
                     }
-
                     dsPage++;
                 }
 
-                // Compute per-PR stats
                 var prStats = {
                     files_changed = arrayLen(diffValues),
                     lines_added = 0,
@@ -1023,7 +1003,6 @@ component extends="modules.BaseModule" {
                 }
 
                 prCtx.diffstat = prStats;
-
                 totals.files_changed += prStats.files_changed;
                 totals.lines_added += prStats.lines_added;
                 totals.lines_removed += prStats.lines_removed;
@@ -1033,7 +1012,7 @@ component extends="modules.BaseModule" {
                 }
             }
 
-            if(arguments.includeCommits){
+            if(shouldIncludeCommits){
                 var commitValues = [];
                 var cPage = 1;
 
@@ -1041,7 +1020,8 @@ component extends="modules.BaseModule" {
                     var cStr = bb.listPullRequestCommits(
                         pullRequestId=pr.id,
                         page=cPage,
-                        pagelen=Int(arguments.childPageLen)
+                        pagelen=Int(arguments.childPageLen),
+                        fields=commitFields
                     );
                     if(!isSimpleValue(cStr) OR !isJSON(cStr)){
                         break;
@@ -1066,7 +1046,6 @@ component extends="modules.BaseModule" {
                     if(!structKeyExists(cs, "next")){
                         break;
                     }
-
                     cPage++;
                 }
 
@@ -1083,6 +1062,7 @@ component extends="modules.BaseModule" {
             branch = arguments.branch,
             since = arguments.sinceISO,
             until = arguments.untilISO,
+            mode = modeNorm,
             base = baseSha,
             head = headSha,
             totals = {
@@ -1096,7 +1076,6 @@ component extends="modules.BaseModule" {
             pullrequests = prContexts
         };
 
-        // json formatting
         if(lCase(arguments.format) EQ "json-compact"){
             return serializeJson(result, true);
         }
