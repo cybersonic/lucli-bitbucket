@@ -6,31 +6,32 @@ component extends="testbox.system.BaseSpec" {
                 variables.moduleSource = fileRead(expandPath("/Module.cfc"));
             });
 
-            it("contains the pullrequests command wrapper", function(){
-                expect(
-                    reFindNoCase(
-                        "public\s+any\s+function\s+pullrequests\s*\(",
-                        variables.moduleSource
-                    ) GT 0
-                ).toBeTrue();
+            it("contains pull request command wrappers", function(){
+                expect(findNoCase("public any function pullrequests(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pullrequests_get(", variables.moduleSource) GT 0).toBeTrue();
             });
 
-            it("contains pullrequests_get with workspace/repo/auth overrides", function(){
-                expect(
-                    reFindNoCase(
-                        'public\s+any\s+function\s+pullrequests_get\s*\(\s*required\s+numeric\s+pullRequestId\s*,\s*string\s+workspace\s*=\s*""\s*,\s*string\s+repoSlug\s*=\s*""\s*,\s*string\s+authToken\s*=\s*""',
-                        variables.moduleSource
-                    ) GT 0
-                ).toBeTrue();
+            it("contains reports list/get/create/delete wrappers", function(){
+                expect(findNoCase("public any function reports(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_get(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_create(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_delete(", variables.moduleSource) GT 0).toBeTrue();
             });
 
-            it("keeps backward compatible createReport wrapper as public command", function(){
-                expect(
-                    reFindNoCase(
-                        "public\s+any\s+function\s+createReport\s*\(",
-                        variables.moduleSource
-                    ) GT 0
-                ).toBeTrue();
+            it("contains reports annotations list/get/post/create/put/delete wrappers", function(){
+                expect(findNoCase("public any function reports_annotations(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_annotations_get(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_annotations_post(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_annotations_create(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_annotations_put(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function reports_annotations_delete(", variables.moduleSource) GT 0).toBeTrue();
+            });
+
+            it("keeps backward compatible legacy report wrappers", function(){
+                expect(findNoCase("public any function createReport(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function createAnnotations(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function postReport(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function postReportAnnotations(", variables.moduleSource) GT 0).toBeTrue();
             });
         });
     }

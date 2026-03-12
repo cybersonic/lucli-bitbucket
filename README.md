@@ -39,3 +39,20 @@ This module is aimed to be used at creating reports and annotations in Bitbucket
 
 It works well with the lucli-lint module, since the lucli-lint module can generate reports with annotations in the required format.
 
+## Authentication
+
+By default the module expects `BITBUCKET_AUTH_TOKEN` and sends it as a Bearer token.
+
+If `BITBUCKET_AUTH_USER` is set, the module treats `BITBUCKET_AUTH_TOKEN` as a personal API token and sends Basic auth (`BITBUCKET_AUTH_USER:BITBUCKET_AUTH_TOKEN`).
+
+Examples:
+
+```bash
+# Bearer token mode (existing behavior)
+export BITBUCKET_AUTH_TOKEN=...
+
+# Personal API token mode (auto-switch to Basic auth)
+export BITBUCKET_AUTH_USER=you@example.com
+export BITBUCKET_AUTH_TOKEN=...
+```
+

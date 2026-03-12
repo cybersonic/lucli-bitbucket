@@ -7,16 +7,74 @@ component {
         BASIC=2;
     }
 
+    private string function normalizeAuthType(any authTypeValue){
+        var rawValue = Trim(authTypeValue & "");
+        if(!Len(rawValue)){
+            return "";
+        }
+
+        switch(lCase(rawValue)){
+            case "basic":
+            case "basic_api_token":
+            case "2":
+                return "basic_api_token";
+            case "bearer":
+            case "repo_bearer":
+            case "workspace_bearer":
+            case "0":
+            case "1":
+                return "bearer";
+            default:
+                return "";
+        }
+    }
+
+    function getAuthMode(){
+        return variables.authType ?: "bearer";
+    }
+
+    function getAuthorizationHeader(){
+        var token = Trim(variables.authToken ?: "");
+        if(!Len(token)){
+            throw("BITBUCKET_AUTH_TOKEN is required.");
+        }
+
+        if(getAuthMode() EQ "basic_api_token"){
+            var authUser = Trim(variables.authUser ?: "");
+            if(!Len(authUser)){
+                throw("BITBUCKET_AUTH_USER is required when using personal API token auth.");
+            }
+            if(!isValid("email", authUser)){
+                throw("BITBUCKET_AUTH_USER must be a valid email address when using personal API token auth.");
+            }
+            return "Basic " & toBase64(authUser & ":" & token);
+        }
+
+        return "Bearer " & token;
+    }
+
     function init(
         string workspace,
         string repoSlug,
         string authToken,
-        string authType=static.WORKSPACE_BEARER
+        string authType="",
+        string authUser=""
     ){
         variables.workspace = arguments.workspace;
         variables.repoSlug = arguments.repoSlug;
-        variables.authToken = arguments.authToken;
-        variables.authType = arguments.authType;
+        variables.authToken = arguments.authToken ?: "";
+        variables.authUser = arguments.authUser ?: "";
+
+        var requestedAuthType = normalizeAuthType(arguments.authType);
+        if(Len(requestedAuthType)){
+            variables.authType = requestedAuthType;
+        }
+        else if(Len(Trim(variables.authUser))){
+            variables.authType = "basic_api_token";
+        }
+        else{
+            variables.authType = "bearer";
+        }
     }
 
 
@@ -44,6 +102,120 @@ component {
             data=reportData
         );
         return response;
+    }
+
+    function listReports(
+        required string commit,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function getReport(
+        required string commit,
+        required string reportId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function deleteReport(
+        required string commit,
+        required string reportId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listReportAnnotations(
+        required string commit,
+        required string reportId,
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#/annotations";
+
+        var params = {};
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function getReportAnnotation(
+        required string commit,
+        required string reportId,
+        required string annotationId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#/annotations/#arguments.annotationId#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function putReportAnnotation(
+        required string commit,
+        required string reportId,
+        required string annotationId,
+        required struct annotationData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#/annotations/#arguments.annotationId#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.annotationData
+        );
+    }
+
+    function deleteReportAnnotation(
+        required string commit,
+        required string reportId,
+        required string annotationId
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/commit/#arguments.commit#/reports/#arguments.reportId#/annotations/#arguments.annotationId#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
     }
 
     function createAnnotations(
@@ -649,19 +821,13 @@ component {
 		var resourcePath = overrideURL ? path : "https://api.bitbucket.org/2.0/#path#";
 		// printGreen(method & ": " & resourcePath);
             resourcePath = Trim(resourcePath);
-		var useBearer=false;
-		var token="";
+		var token = Trim(variables.authToken ?: "");
+		var authMode = getAuthMode();
+		var authorizationHeader = getAuthorizationHeader();
 
 		//change the auth. 
 
 		var bitbucketresponse = {};
-		// if(variables.authType EQ BitbucketClient::REPO_BEARER) {
-			useBearer=true;
-			token = variables.authToken;
-		// } else if(variables.authType EQ BitbucketClient::WORKSPACE_BEARER) {
-		// 	useBearer=true;
-		// 	token = variables.authToken;
-		// }
 
             var sendBody = false;
             if(!isNull(arguments.data) AND method NEQ "GET"){
@@ -684,7 +850,7 @@ component {
 			http method="#arguments.method#" url="#resourcePath#"
 				result="local.bitbucketresponse"
 			{
-				httpparam type="header" name="Authorization" value="Bearer #Trim(token)#";
+				httpparam type="header" name="Authorization" value="#authorizationHeader#";
                 if(NOT overrideURL){
                     httpparam type="header" name="Content-Type" value="application/json";
 
@@ -729,7 +895,7 @@ component {
 			// printRed(bitbucketresponse);
 			SystemOutput(SerializeJSON(data=bitbucketresponse, compact=false), true, true);
             var outtoken = Len(token) GT 10 ? Left(token , 10) & "..." : "xxxxx";
-            throw("Bitbucket API call to [#resourcePath#] using bearer [#useBearer#] [#outtoken#] failed with status code #statusCode# and response: #bitbucketresponse.fileContent#");
+            throw("Bitbucket API call to [#resourcePath#] using auth mode [#authMode#] [#outtoken#] failed with status code #statusCode# and response: #bitbucketresponse.fileContent#");
 		}
 
         // Return raw response content.

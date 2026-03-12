@@ -91,14 +91,16 @@ component extends="modules.BaseModule" {
     private any function createClient(
         string repoSlug="",
         string workspace="",
-        string authToken=""
+        string authToken="",
+        string authUser=""
     ){
 
         // If we don't have the required params, get it from the env, and if we still don't have it show a proper error message
         return new BitbucketClient(
             repoSlug = Len(arguments.repoSlug) ? arguments.repoSlug : getEnv("BITBUCKET_REPO_SLUG", ""),
             workspace = Len(arguments.workspace) ? arguments.workspace : getEnv("BITBUCKET_WORKSPACE", ""),
-            authToken = Len(arguments.authToken) ? arguments.authToken : getEnv("BITBUCKET_AUTH_TOKEN", "")
+            authToken = Len(arguments.authToken) ? arguments.authToken : getEnv("BITBUCKET_AUTH_TOKEN", ""),
+            authUser = Len(arguments.authUser) ? arguments.authUser : getEnv("BITBUCKET_AUTH_USER", "")
         );
     }
 
@@ -118,9 +120,252 @@ component extends="modules.BaseModule" {
         return deserializeJson(fileRead(absPath));
     }
 
+    // --- Reports (API group: /reports) ---
+
     /**
+     * List reports for a commit.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/commit/{commit}/reports
+     */
+    public any function reports(
+        required string commit,
+        numeric page=0,
+        numeric pagelen=0,
+        string workspace="",
+        string repoSlug="",
+        string authToken="",
+        string format=""
+    ){
+        var res = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listReports(
+                commit=arguments.commit,
+                page=Int(arguments.page),
+                pagelen=Int(arguments.pagelen)
+            );
+
+        if(lCase(arguments.format) EQ "json" OR lCase(arguments.format) EQ "json-compact"){
+            if(isSimpleValue(res) AND isJSON(res)){
+                return res;
+            }
+            return serializeJson(res, lCase(arguments.format) EQ "json-compact");
+        }
+
+        return res;
+    }
+
+    /**
+     * Get a report by id.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}
+     */
+    public any function reports_get(
+        required string commit,
+        required string reportId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getReport(
+                commit=arguments.commit,
+                reportId=arguments.reportId
+            );
+    }
+
+    /**
+     * Create a report.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}
+     */
+    public any function reports_create(
+        required string commit,
+        required string dataFile,
+        string reportId="",
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var reportData = readJsonFile(arguments.dataFile);
+        var reportIdToUse = arguments.reportId;
+        if(!Len(reportIdToUse) AND isStruct(reportData) AND structKeyExists(reportData, "title") AND Len(reportData.title)){
+            reportIdToUse = lCase(replace(reportData.title, " ", "_", "all"));
+        }
+
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createReport(
+                reportData=reportData,
+                commit=arguments.commit,
+                reportId=reportIdToUse
+            );
+    }
+
+    /**
+     * Delete a report by id.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}
+     */
+    public any function reports_delete(
+        required string commit,
+        required string reportId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deleteReport(
+                commit=arguments.commit,
+                reportId=arguments.reportId
+            );
+    }
+
+    /**
+     * List report annotations.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}/annotations
+     */
+    public any function reports_annotations(
+        required string commit,
+        required string reportId,
+        numeric page=0,
+        numeric pagelen=0,
+        string workspace="",
+        string repoSlug="",
+        string authToken="",
+        string format=""
+    ){
+        var res = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listReportAnnotations(
+                commit=arguments.commit,
+                reportId=arguments.reportId,
+                page=Int(arguments.page),
+                pagelen=Int(arguments.pagelen)
+            );
+
+        if(lCase(arguments.format) EQ "json" OR lCase(arguments.format) EQ "json-compact"){
+            if(isSimpleValue(res) AND isJSON(res)){
+                return res;
+            }
+            return serializeJson(res, lCase(arguments.format) EQ "json-compact");
+        }
+
+        return res;
+    }
+
+    /**
+     * Get a report annotation by id.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}/annotations/{annotationId}
+     */
+    public any function reports_annotations_get(
+        required string commit,
+        required string reportId,
+        required string annotationId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getReportAnnotation(
+                commit=arguments.commit,
+                reportId=arguments.reportId,
+                annotationId=arguments.annotationId
+            );
+    }
+
+    /**
+     * Create report annotations.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}/annotations
+     */
+    public any function reports_annotations_post(
+        required string commit,
+        required string dataFile,
+        required string reportId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var payload = readJsonFile(arguments.dataFile);
+        var annotations = [];
+        if(isArray(payload)){
+            annotations = payload;
+        }
+        else if(isStruct(payload) AND structKeyExists(payload, "annotations")){
+            annotations = payload.annotations;
+        }
+
+        if(!isArray(annotations) OR arrayLen(annotations) EQ 0){
+            throw("No annotations found in file: #arguments.dataFile#");
+        }
+
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createAnnotations(
+                annotations=annotations,
+                commit=arguments.commit,
+                reportId=arguments.reportId
+            );
+    }
+
+    /**
+     * Alias wrapper for report annotations creation.
+     * Keeps endpoint-style naming compatibility with other command groups.
+     */
+    public any function reports_annotations_create(
+        required string commit,
+        required string dataFile,
+        required string reportId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return reports_annotations_post(
+            commit=arguments.commit,
+            dataFile=arguments.dataFile,
+            reportId=arguments.reportId,
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
+        );
+    }
+
+    /**
+     * Upsert a report annotation by id.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}/annotations/{annotationId}
+     */
+    public any function reports_annotations_put(
+        required string commit,
+        required string reportId,
+        required string annotationId,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .putReportAnnotation(
+                commit=arguments.commit,
+                reportId=arguments.reportId,
+                annotationId=arguments.annotationId,
+                annotationData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete a report annotation by id.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{reportId}/annotations/{annotationId}
+     */
+    public any function reports_annotations_delete(
+        required string commit,
+        required string reportId,
+        required string annotationId,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deleteReportAnnotation(
+                commit=arguments.commit,
+                reportId=arguments.reportId,
+                annotationId=arguments.annotationId
+            );
+    }
+
+    /**
+     * DEPRECATED: use reports_create + reports_annotations_post.
      * Backward-compatible wrapper for reports.
-     * Previously supported via `lucli bitbucket --action=createReport`.
      */
     public any function createReport(
         required string commit,
@@ -130,26 +375,28 @@ component extends="modules.BaseModule" {
         string repoSlug="",
         string authToken=""
     ){
-        var reportData = readJsonFile(arguments.file);
-        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
+        var reportResponse = reports_create(
+            commit=arguments.commit,
+            dataFile=arguments.file,
+            reportId=arguments.reportId,
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
+        );
 
+        var reportData = readJsonFile(arguments.file);
         var reportIdToUse = arguments.reportId;
         if(!Len(reportIdToUse) AND isStruct(reportData) AND structKeyExists(reportData, "title") AND Len(reportData.title)){
             reportIdToUse = lCase(replace(reportData.title, " ", "_", "all"));
         }
 
-        var reportResponse = bb.createReport(
-            reportData=reportData,
-            commit=arguments.commit,
-            reportId=reportIdToUse
-        );
-
         var result = {
             report = reportResponse
         };
 
-        // If the report JSON has annotations embedded, post them too.
+        // Legacy behavior: if the report JSON has embedded annotations, post them too.
         if(isStruct(reportData) AND structKeyExists(reportData, "annotations") AND isArray(reportData.annotations) AND arrayLen(reportData.annotations) GT 0){
+            var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
             result.annotations = bb.createAnnotations(
                 annotations=reportData.annotations,
                 commit=arguments.commit,
@@ -161,8 +408,8 @@ component extends="modules.BaseModule" {
     }
 
     /**
+     * DEPRECATED: use reports_annotations_post.
      * Backward-compatible wrapper for report annotations.
-     * Previously supported via `lucli bitbucket --action=createAnnotations`.
      */
     public any function createAnnotations(
         required string commit,
@@ -172,25 +419,13 @@ component extends="modules.BaseModule" {
         string repoSlug="",
         string authToken=""
     ){
-        var payload = readJsonFile(arguments.file);
-        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
-
-        var annotations = [];
-        if(isArray(payload)){
-            annotations = payload;
-        }
-        else if(isStruct(payload) AND structKeyExists(payload, "annotations")){
-            annotations = payload.annotations;
-        }
-
-        if(!isArray(annotations) OR arrayLen(annotations) EQ 0){
-            throw("No annotations found in file: #arguments.file#");
-        }
-
-        return bb.createAnnotations(
-            annotations=annotations,
+        return reports_annotations_post(
             commit=arguments.commit,
-            reportId=arguments.reportId
+            dataFile=arguments.file,
+            reportId=arguments.reportId,
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
         );
     }
 
@@ -1100,6 +1335,121 @@ component extends="modules.BaseModule" {
             );
     }
 
+    /**
+     * Return one combined payload for a single pull request:
+     * - PR metadata
+     * - Diffstat (auto-paginated)
+     * - Raw unified diff text
+     */
+    public any function getPullRequestContext(
+        numeric pullRequestId=0,
+        numeric diffstatPageLen=100,
+        numeric maxDiffstatPages=100,
+        string workspace="",
+        string repoSlug="",
+        string authToken="",
+        string format="json"
+    ){
+        var prId = Int(arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "0"));
+        if(prId LTE 0){
+            throw("pullRequestId is required (or set BITBUCKET_PR_ID).");
+        }
+
+        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
+
+        var prRaw = bb.getPullRequest(pullRequestId=prId);
+        var prData = prRaw;
+        if(isSimpleValue(prRaw) AND isJSON(prRaw)){
+            prData = deserializeJson(prRaw);
+        }
+
+        var diffstatValues = [];
+        var diffstatMeta = {};
+        var diffstatRawFallback = "";
+        var hasDiffstatRawFallback = false;
+
+        var dsPageLen = Int(arguments.diffstatPageLen);
+        if(dsPageLen LTE 0){
+            dsPageLen = 100;
+        }
+        var dsMaxPages = Int(arguments.maxDiffstatPages);
+        if(dsMaxPages LTE 0){
+            dsMaxPages = 1;
+        }
+
+        var dsPage = 1;
+        while(dsPage LTE dsMaxPages){
+            var dsRaw = bb.getPullRequestDiffStat(
+                pullRequestId=prId,
+                page=dsPage,
+                pagelen=dsPageLen
+            );
+
+            if(!isSimpleValue(dsRaw) OR !isJSON(dsRaw)){
+                diffstatRawFallback = dsRaw;
+                hasDiffstatRawFallback = true;
+                break;
+            }
+
+            var ds = deserializeJson(dsRaw);
+            if(!isStruct(ds)){
+                diffstatRawFallback = dsRaw;
+                hasDiffstatRawFallback = true;
+                break;
+            }
+
+            for(var k in ds){
+                if(k NEQ "values" AND k NEQ "next"){
+                    diffstatMeta[k] = ds[k];
+                }
+            }
+
+            if(structKeyExists(ds, "values") AND isArray(ds.values)){
+                for(var v in ds.values){
+                    arrayAppend(diffstatValues, v);
+                }
+            }
+
+            if(!structKeyExists(ds, "next")){
+                break;
+            }
+
+            dsPage++;
+        }
+
+        var diffstatData = {};
+        if(hasDiffstatRawFallback){
+            diffstatData = diffstatRawFallback;
+        }
+        else{
+            diffstatData = duplicate(diffstatMeta);
+            diffstatData.values = diffstatValues;
+            diffstatData.page = 1;
+            diffstatData.pagelen = dsPageLen;
+            diffstatData.size = arrayLen(diffstatValues);
+            if(dsPage GT dsMaxPages){
+                diffstatData.truncated = true;
+                diffstatData.truncated_reason = "maxDiffstatPages reached";
+            }
+        }
+
+        var diffContent = bb.getPullRequestDiff(pullRequestId=prId);
+
+        var result = {
+            workspace = Len(arguments.workspace) ? arguments.workspace : getEnv("BITBUCKET_WORKSPACE", ""),
+            repoSlug = Len(arguments.repoSlug) ? arguments.repoSlug : getEnv("BITBUCKET_REPO_SLUG", ""),
+            pullRequestId = prId,
+            pr = prData,
+            diffstat = diffstatData,
+            diff = diffContent
+        };
+
+        if(lCase(arguments.format) EQ "json-compact"){
+            return serializeJson(result, true);
+        }
+        return serializeJson(result, false);
+    }
+
 
     /**
      * Returns the Diff text of a pull request
@@ -1301,6 +1651,7 @@ component extends="modules.BaseModule" {
 
 
     /**
+     * DEPRECATED: use reports_create.
      * posts a report to bitbuclet from a report formatted json file
      *
      * @commit the commit
@@ -1317,6 +1668,16 @@ component extends="modules.BaseModule" {
         string repoSlug="",
         string authToken=""
     ) {
+        if(!Len(arguments.title) AND !Len(arguments.details)){
+            return reports_create(
+                commit=arguments.commit,
+                dataFile=arguments.reportPath,
+                reportId=arguments.reportID,
+                workspace=arguments.workspace,
+                repoSlug=arguments.repoSlug,
+                authToken=arguments.authToken
+            );
+        }
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
 
         var absReportPath = getAbsolutePath(variables.cwd, arguments.reportPath);
@@ -1339,6 +1700,7 @@ component extends="modules.BaseModule" {
     }
    
     /**
+     * DEPRECATED: use reports_annotations_post.
      * adds annotations to a report
      *
      * @commit the commit
@@ -1354,21 +1716,14 @@ component extends="modules.BaseModule" {
         string repoSlug="",
         string authToken=""
     ) {
-        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
-
-        var absAnnotationPath = getAbsolutePath(variables.cwd, arguments.annotationFile);
-        var annotations = deserializeJson(fileRead(absAnnotationPath));
-
-        if(!annotations.len()){
-            throw("No annotations found in file: #annotationFile#");
-        }
-        var annotationResponse = bb.createAnnotations(
-            annotations = annotations,
-            commit = commit,
-            reportId = reportId
+        return reports_annotations_post(
+            commit=arguments.commit,
+            dataFile=arguments.annotationFile,
+            reportId=arguments.reportId,
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
         );
-
-        return annotationResponse;
     }
 
 
