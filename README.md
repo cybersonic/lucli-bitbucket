@@ -27,6 +27,7 @@ lucli bitbucket weeklyReleaseContext \
   sinceISO=2026-03-01T00:00:00Z \
   untilISO=2026-03-08T00:00:00Z \
   includeDiffstat=true \
+  includeDiff=false \
   includeCommits=false
 
 # List tags (useful if you later want to key off revision-* tags)

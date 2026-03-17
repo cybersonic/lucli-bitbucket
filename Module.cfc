@@ -986,13 +986,14 @@ component extends="modules.BaseModule" {
      * Strategy:
      * - List MERGED PRs into the destination branch (default: main)
      * - Filter locally by merged timestamp (prefers closed_on)
-     * - Optionally fetch diffstat/commits per PR and compute aggregates
+     * - Optionally fetch diff/diffstat/commits per PR and compute aggregates
      */
     public any function weeklyReleaseContext(
         string branch="main",
         string sinceISO="",
         string untilISO="",
         boolean includeDiffstat=true,
+        boolean includeDiff=false,
         boolean includeCommits=false,
         string mode="detailed",
         boolean includeBaseHead=false,
@@ -1004,7 +1005,8 @@ component extends="modules.BaseModule" {
         string workspace="",
         string repoSlug="",
         string authToken="",
-        string format="json"
+        string format="json",
+        string outputPath=""
     ){
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
         var modeNorm = lCase(trim(arguments.mode));
@@ -1012,9 +1014,11 @@ component extends="modules.BaseModule" {
             modeNorm = "detailed";
         }
         var shouldIncludeDiffstat = arguments.includeDiffstat;
+        var shouldIncludeDiff = arguments.includeDiff;
         var shouldIncludeCommits = arguments.includeCommits;
         if(modeNorm EQ "fast"){
             shouldIncludeDiffstat = false;
+            shouldIncludeDiff = false;
             shouldIncludeCommits = false;
         }
 
@@ -1179,6 +1183,17 @@ component extends="modules.BaseModule" {
             if(Len(prCtx.author)){
                 totals.unique_authors[prCtx.author] = true;
             }
+            if(shouldIncludeDiff){
+                prCtx.diff = "";
+                try {
+                    prCtx.diff = bb.getPullRequestDiff(
+                        pullRequestId=pr.id
+                    );
+                } catch(any e){
+                    // Keep payload stable even if diff fetch fails for one PR.
+                    prCtx.diff = "";
+                }
+            }
 
             if(shouldIncludeDiffstat){
                 var diffValues = [];
@@ -1311,6 +1326,11 @@ component extends="modules.BaseModule" {
             pullrequests = prContexts
         };
 
+        if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            fileWrite(absOutputPath, serializeJson(result, lCase(arguments.format) EQ "json-compact"));
+            return "Written output to #absOutputPath#";
+        }
         if(lCase(arguments.format) EQ "json-compact"){
             return serializeJson(result, true);
         }

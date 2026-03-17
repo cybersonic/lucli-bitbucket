@@ -33,6 +33,14 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase("public any function postReport(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("public any function postReportAnnotations(", variables.moduleSource) GT 0).toBeTrue();
             });
+
+            it("weeklyReleaseContext keeps full diff optional while preserving diffstat enrichment", function(){
+                expect(findNoCase("public any function weeklyReleaseContext(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("boolean includeDiff=false", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("if(shouldIncludeDiff){", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("prCtx.diffstat = prStats;", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("prCtx.diff = bb.getPullRequestDiff(", variables.moduleSource) GT 0).toBeTrue();
+            });
         });
     }
 }

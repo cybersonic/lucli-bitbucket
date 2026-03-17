@@ -66,6 +66,7 @@ When implementing a new REST endpoint:
 - Tests should be named like `<feature_name>Spec.cfc`.
 - Tests should be written using the `testbox` framework.
 - Tests can be run directly by starting the server using `lucli server start` and then running `http://localhost:8001/tests/`
+- Test results can be also be obtained by going to `http://localhost:8001/tests/?reporter=json` to get a JSON report of the test results.
 - Mocking is supported by using the `testbox` framework.
 
 ## Footguns / notes

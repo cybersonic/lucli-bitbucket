@@ -13,6 +13,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Decorated helper commands: `filterAnnotationsInDiff` and `downloadPRFiles`.
 - Refs API support for tags via `lucli bitbucket refs_tags`.
 - Decorated helper command `weeklyReleaseContext` to build a weekly merged-to-main release context (PRs + optional diffstat/commits) without a git clone.
+- `weeklyReleaseContext` supports optional per-PR `diff` inclusion via `includeDiff=true`; by default, PR payloads exclude full diff text to reduce output size.
 - Reports API-style subcommands: `reports`, `reports_get`, `reports_create`, `reports_delete`, `reports_annotations`, `reports_annotations_get`, `reports_annotations_post`, `reports_annotations_create`, `reports_annotations_put`, and `reports_annotations_delete`.
 
 ### Changed
