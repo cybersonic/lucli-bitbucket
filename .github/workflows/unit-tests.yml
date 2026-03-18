@@ -13,23 +13,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Checkout TestBox
-        uses: actions/checkout@v4
-        with:
-          repository: Ortus-Solutions/TestBox
-          path: testbox
 
       - name: Run TestBox suite in lucli container
         run: |
           set -eu
 
           docker run --rm \
+            --user root \
             -v "$PWD:/workspace" \
             -w /workspace \
             --entrypoint /bin/sh \
             markdrew/lucli:snapshot \
             -lc '
               set -eu
+              apt-get update
+              apt-get install -y curl gpg apt-transport-https ca-certificates
+              curl -fsSl https://downloads.ortussolutions.com/debs/gpg | gpg --dearmor > /usr/share/keyrings/ortussolutions.gpg
+              echo "deb [signed-by=/usr/share/keyrings/ortussolutions.gpg] https://downloads.ortussolutions.com/debs/noarch /" > /etc/apt/sources.list.d/commandbox.list
+              apt-get update
+              apt-get install -y commandbox
+
+              box version
+              
 
               cleanup() {
                 lucli server stop >/dev/null 2>&1 || true
