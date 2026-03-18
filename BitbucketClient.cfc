@@ -65,6 +65,14 @@ component {
         variables.authToken = arguments.authToken ?: "";
         variables.authUser = arguments.authUser ?: "";
 
+        // Validate required repository context early to avoid malformed API paths.
+        if( !Len( Trim( variables.workspace ?: "" ) ) ){
+            throw( "BITBUCKET_WORKSPACE is required." );
+        }
+        if( !Len( Trim( variables.repoSlug ?: "" ) ) ){
+            throw( "BITBUCKET_REPO_SLUG is required." );
+        }
+
         var requestedAuthType = normalizeAuthType(arguments.authType);
         if(Len(requestedAuthType)){
             variables.authType = requestedAuthType;
