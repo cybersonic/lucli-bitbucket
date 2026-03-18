@@ -1672,7 +1672,7 @@ component extends="modules.BaseModule" {
 
     /**
      * DEPRECATED: use reports_create.
-     * posts a report to bitbuclet from a report formatted json file
+     * posts a report to bitbucket from a report formatted json file
      *
      * @commit the commit
      * @reportPath the path to the bitbucket report json file
