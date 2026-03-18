@@ -42,7 +42,7 @@ jobs:
               trap cleanup EXIT
               lucli install
 
-              lucli server start --background=true --host=127.0.0.1 --port=8001
+              lucli server start --disable-open-browser
 
               ready=0
               i=0

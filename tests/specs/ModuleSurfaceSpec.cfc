@@ -38,9 +38,9 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase("public any function downloadFile(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("required string fileURL", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("required string destinationPath", variables.moduleSource) GT 0).toBeTrue();
-                expect(findNoCase("return bb.downloadFile(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("bb.downloadFile(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("fileURL=arguments.fileURL", variables.moduleSource) GT 0).toBeTrue();
-                expect(findNoCase("destinationPath=arguments.destinationPath", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("absDownloadPath = getAbsolutePath(variables.cwd, arguments.destinationPath);", variables.moduleSource) GT 0).toBeTrue();
             });
 
             it("weeklyReleaseContext keeps full diff optional while preserving diffstat enrichment", function(){

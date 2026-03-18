@@ -8,6 +8,14 @@
   "port" : 8001,
   "shutdownPort" : 9001,
   "webroot" : "./",
+  "dependencies" : {
+    "testbox" :{
+      "version" : "6.5.0+18",
+      "source":"forgebox",
+      "installPath": "dependencies",
+      "mapping": "/testbox"
+    }
+  },
   "ajp" : {
     "enabled" : false
   },
@@ -23,7 +31,7 @@
     "additionalArgs" : [ ]
   },
   "urlRewrite" : {
-    "enabled" : true,
+    "enabled" : false,
     "routerFile" : "index.cfm",
     "configFile" : "rewrite.config"
   },
