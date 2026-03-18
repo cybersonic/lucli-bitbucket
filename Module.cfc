@@ -1608,7 +1608,8 @@ component extends="modules.BaseModule" {
         if(!fileExists(arguments.destinationPath)){
             throw("File download failed; expected file at " & arguments.destinationPath);
         }
-        return "File downloaded to " & arguments.destinationPath;
+        
+        return DirectoryList(getDirectoryFromPath(arguments.destinationPath), false);
     }
 
     public any function downloadPRFiles(
