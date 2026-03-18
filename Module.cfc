@@ -1584,6 +1584,28 @@ component extends="modules.BaseModule" {
 
 
 
+    /**
+     * Backward-compatible shortcut to download a file from a Bitbucket API URL.
+     */
+    public any function downloadFile(
+        required string fileURL,
+        required string destinationPath,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var bb = createClient(
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
+        );
+
+        return bb.downloadFile(
+            fileURL=arguments.fileURL,
+            destinationPath=arguments.destinationPath
+        );
+    }
+
     public any function downloadPRFiles(
         numeric pullRequestId = 0,
         string downloadPath="",

@@ -1,0 +1,73 @@
+name: Unit Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  testbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Checkout TestBox
+        uses: actions/checkout@v4
+        with:
+          repository: Ortus-Solutions/TestBox
+          path: testbox
+
+      - name: Run TestBox suite in lucli container
+        run: |
+          set -eu
+
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            --entrypoint /bin/sh \
+            markdrew/lucli:snapshot \
+            -lc '
+              set -eu
+
+              cleanup() {
+                lucli server stop >/dev/null 2>&1 || true
+              }
+              trap cleanup EXIT
+              lucli install
+
+              lucli server start --background=true --host=127.0.0.1 --port=8001
+
+              ready=0
+              i=0
+              while [ "$i" -lt 60 ]; do
+                if curl -fsS "http://127.0.0.1:8001/tests/?reporter=json" -o test-results.json; then
+                  ready=1
+                  break
+                fi
+                i=$((i + 1))
+                sleep 1
+              done
+
+              if [ "$ready" -ne 1 ]; then
+                echo "Timed out waiting for test runner endpoint"
+                exit 1
+              fi
+
+              FAILS=$(grep -oE "\"totalFail\"[[:space:]]*:[[:space:]]*[0-9]+" test-results.json | grep -oE "[0-9]+" || true)
+              ERRORS=$(grep -oE "\"totalError\"[[:space:]]*:[[:space:]]*[0-9]+" test-results.json | grep -oE "[0-9]+" || true)
+
+              if [ -z "${FAILS:-}" ] || [ -z "${ERRORS:-}" ]; then
+                echo "Could not parse totalFail/totalError from TestBox JSON output"
+                cat test-results.json
+                exit 1
+              fi
+
+              if [ "$FAILS" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+                echo "TestBox failures detected (failures=$FAILS, errors=$ERRORS)"
+                exit 1
+              fi
+
+              echo "TestBox passed (failures=$FAILS, errors=$ERRORS)"
+            '

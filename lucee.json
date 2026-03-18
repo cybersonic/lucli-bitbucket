@@ -1,26 +1,41 @@
 {
   "name" : "bitbucket",
-  "lucee":{
-    "version": "6.2.4.24"
+  "version" : "1.0.0",
+  "lucee" : {
+    "version" : "7.0.2.101-SNAPSHOT",
+    "variant" : "standard"
   },
   "port" : 8001,
+  "shutdownPort" : 9001,
   "webroot" : "./",
-  "dependencies" : {
-    "testbox" :{
-      "version" : "6.5.0+18",
-      "source":"forgebox",
-      "mapping": "/testbox"
-    }
+  "ajp" : {
+    "enabled" : false
   },
-  "urlRewrite": {
-    "enabled": false
+  "monitoring" : {
+    "enabled" : false,
+    "jmx" : {
+      "port" : 8999
+    }
   },
   "jvm" : {
     "maxMemory" : "512m",
     "minMemory" : "128m",
     "additionalArgs" : [ ]
   },
+  "urlRewrite" : {
+    "enabled" : true,
+    "routerFile" : "index.cfm",
+    "configFile" : "rewrite.config"
+  },
   "admin" : {
-    "enabled" : false
-  }
+    "enabled" : true,
+    "password" : ""
+  },
+  "enableLucee" : true,
+  "enableREST" : false,
+  "agents" : { },
+  "openBrowser" : true,
+  "openBrowserURL" : "http://localhost:8001/tests",
+  "envVars" : { },
+  "environments" : { }
 }

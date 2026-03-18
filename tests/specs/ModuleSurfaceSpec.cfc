@@ -34,6 +34,15 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase("public any function postReportAnnotations(", variables.moduleSource) GT 0).toBeTrue();
             });
 
+            it("keeps backward compatible legacy downloadFile wrapper", function(){
+                expect(findNoCase("public any function downloadFile(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("required string fileURL", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("required string destinationPath", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("return bb.downloadFile(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("fileURL=arguments.fileURL", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("destinationPath=arguments.destinationPath", variables.moduleSource) GT 0).toBeTrue();
+            });
+
             it("weeklyReleaseContext keeps full diff optional while preserving diffstat enrichment", function(){
                 expect(findNoCase("public any function weeklyReleaseContext(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("boolean includeDiff=false", variables.moduleSource) GT 0).toBeTrue();
