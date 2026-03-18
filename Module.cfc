@@ -1368,7 +1368,8 @@ component extends="modules.BaseModule" {
         string workspace="",
         string repoSlug="",
         string authToken="",
-        string format="json"
+        string format="json",
+        string outputPath=""
     ){
         var prId = Int(arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "0"));
         if(prId LTE 0){
@@ -1463,7 +1464,11 @@ component extends="modules.BaseModule" {
             diffstat = diffstatData,
             diff = diffContent
         };
-
+         if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            fileWrite(absOutputPath, serializeJson(result, lCase(arguments.format) EQ "json-compact"));
+            return "Written output to #absOutputPath#";
+        }
         if(lCase(arguments.format) EQ "json-compact"){
             return serializeJson(result, true);
         }

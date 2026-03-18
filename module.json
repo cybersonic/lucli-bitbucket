@@ -6,31 +6,5 @@
   "license": "MIT",
   "keywords": ["lucli", "module", "cfml", "bitbucket"],
   "main": "Module.cfc",
-  "permissions": {
-    "env": [
-      {
-        "alias": "BITBUCKET_WORKSPACE",
-        "required": false,
-        "description": "Bitbucket workspace slug"
-      },
-      {
-        "alias": "BITBUCKET_REPO_SLUG",
-        "required": false,
-        "description": "Bitbucket repository slug"
-      },
-      {
-        "alias": "BITBUCKET_AUTH_USER",
-        "required": false,
-        "description": "Atlassian user/email for personal API token auth"
-      }
-    ],
-    "secrets": [
-      {
-        "alias": "BITBUCKET_AUTH_TOKEN",
-        "required": false,
-        "description": "Bitbucket bearer token or personal API token"
-      }
-    ]
-  },
   "created": "2025-10-31T14:34:42.106931Z"
 }
