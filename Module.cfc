@@ -1600,16 +1600,15 @@ component extends="modules.BaseModule" {
             authToken=arguments.authToken
         );
 
+        var absDownloadPath = getAbsolutePath(variables.cwd, arguments.destinationPath);
          bb.downloadFile(
             fileURL=arguments.fileURL,
-            destinationPath=arguments.destinationPath
+            destinationPath=absDownloadPath
         );
 
-        if(!fileExists(arguments.destinationPath)){
-            throw("File download failed; expected file at " & arguments.destinationPath);
-        }
+      
         
-        return DirectoryList(getDirectoryFromPath(arguments.destinationPath), false);
+        return "Downloaded file from #arguments.fileURL# to #absDownloadPath#";
     }
 
     public any function downloadPRFiles(
