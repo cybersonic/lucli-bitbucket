@@ -1,13 +1,19 @@
 {
   "name" : "bitbucket",
-  "version" : "6.2.2.91",
+  "lucee":{
+    "version": "6.2.4.24"
+  },
   "port" : 8001,
   "webroot" : "./",
-  "monitoring" : {
-    "enabled" : false,
-    "jmx" : {
-      "port" : 9999
+  "dependencies" : {
+    "testbox" :{
+      "version" : "6.5.0+18",
+      "source":"forgebox",
+      "mapping": "/testbox"
     }
+  },
+  "urlRewrite": {
+    "enabled": false
   },
   "jvm" : {
     "maxMemory" : "512m",
@@ -15,6 +21,6 @@
     "additionalArgs" : [ ]
   },
   "admin" : {
-    "enabled" : true
+    "enabled" : false
   }
 }
