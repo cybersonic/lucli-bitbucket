@@ -1600,10 +1600,15 @@ component extends="modules.BaseModule" {
             authToken=arguments.authToken
         );
 
-        return bb.downloadFile(
+         bb.downloadFile(
             fileURL=arguments.fileURL,
             destinationPath=arguments.destinationPath
         );
+
+        if(!fileExists(arguments.destinationPath)){
+            throw("File download failed; expected file at " & arguments.destinationPath);
+        }
+        return "File downloaded to " & arguments.destinationPath;
     }
 
     public any function downloadPRFiles(
