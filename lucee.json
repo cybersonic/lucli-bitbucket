@@ -21,7 +21,6 @@
     "additionalArgs" : [ ]
   },
   "admin" : {
-    "enabled" : true,
-    "password": "admin123"
+    "enabled" : false
   }
 }
