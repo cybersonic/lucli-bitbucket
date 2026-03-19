@@ -753,18 +753,42 @@ component extends="modules.BaseModule" {
     /**
      * Create a PR comment.
      * Maps to POST /repositories/{workspace}/{repo_slug}/pullrequests/{pull_request_id}/comments
+     * see: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-comments-post
      */
     public any function pullrequests_comments_create(
         required numeric pullRequestId,
-        required string dataFile,
+        string comment="",
+        string commentFile="",
         string workspace="",
         string repoSlug="",
         string authToken=""
     ){
+
+        var finalComment = "";
+        if(Len(arguments.comment)){
+            finalComment = arguments.comment;
+        }
+        else if(Len(arguments.commentFile)){
+            var absCommentFile = getAbsolutePath(variables.cwd, arguments.commentFile);
+            if(!fileExists(absCommentFile)){
+                throw("Comment file not found: #absCommentFile#");
+            }
+            finalComment = fileRead(absCommentFile);
+        }
+        else {
+            throw("Either comment or commentFile is required");
+        }
+        
+        var commentData = {
+            content = {
+                raw = finalComment
+            }
+        };
+
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPullRequestComment(
                 pullRequestId=arguments.pullRequestId,
-                commentData=readJsonFile(arguments.dataFile)
+                commentData=commentData
             );
     }
 
