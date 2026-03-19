@@ -780,8 +780,8 @@ component extends="modules.BaseModule" {
         }
         
         var commentData = {
-            content = {
-                raw = finalComment
+            "content" = {
+                "raw" = finalComment
             }
         };
 
