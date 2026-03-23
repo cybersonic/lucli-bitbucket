@@ -529,12 +529,27 @@ component {
 
     function listPullRequestComments(
         required numeric pullRequestId,
+        struct filter={},
+        string q="",
+        string sort="",
         numeric page=0,
         numeric pagelen=0
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#/comments";
 
         var params = {};
+        if(Len(arguments.q)){
+            params.q = arguments.q;
+        }
+        else if(isStruct(arguments.filter) AND structKeyExists(arguments.filter, "q") AND Len(arguments.filter.q & "")){
+            params.q = arguments.filter.q;
+        }
+        if(Len(arguments.sort)){
+            params.sort = arguments.sort;
+        }
+        else if(isStruct(arguments.filter) AND structKeyExists(arguments.filter, "sort") AND Len(arguments.filter.sort & "")){
+            params.sort = arguments.filter.sort;
+        }
         if(arguments.page GT 0){
             params.page = arguments.page;
         }

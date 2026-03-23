@@ -736,6 +736,8 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_comments(
         required numeric pullRequestId,
+        string q="",
+        string sort="",
         numeric page=0,
         numeric pagelen=0,
         string workspace="",
@@ -745,6 +747,8 @@ component extends="modules.BaseModule" {
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestComments(
                 pullRequestId=arguments.pullRequestId,
+                q=arguments.q,
+                sort=arguments.sort,
                 page=arguments.page,
                 pagelen=arguments.pagelen
             );
@@ -817,17 +821,197 @@ component extends="modules.BaseModule" {
     public any function pullrequests_comments_update(
         required numeric pullRequestId,
         required numeric commentId,
-        required string dataFile,
+        string comment="",
+        string commentFile="",
+        string dataFile="",
         string workspace="",
         string repoSlug="",
         string authToken=""
     ){
+        var commentData = {};
+        if(Len(arguments.comment)){
+            commentData = {
+                "content" = {
+                    "raw" = arguments.comment
+                }
+            };
+        }
+        else if(Len(arguments.commentFile)){
+            var absCommentFile = getAbsolutePath(variables.cwd, arguments.commentFile);
+            if(!fileExists(absCommentFile)){
+                throw("Comment file not found: #absCommentFile#");
+            }
+            commentData = {
+                "content" = {
+                    "raw" = fileRead(absCommentFile)
+                }
+            };
+        }
+        else if(Len(arguments.dataFile)){
+            commentData = readJsonFile(arguments.dataFile);
+        }
+        else {
+            throw("One of comment, commentFile, or dataFile is required");
+        }
+        if(!isStruct(commentData)){
+            throw("Comment payload must be a JSON object");
+        }
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePullRequestComment(
                 pullRequestId=arguments.pullRequestId,
                 commentId=arguments.commentId,
-                commentData=readJsonFile(arguments.dataFile)
+                commentData=commentData
             );
+    }
+    /**
+     * Decorated helper: save a PR comment by optional id.
+     * If commentId is provided (>0), updates the existing comment.
+     * If commentId is not provided (or <=0), optionally looks up an existing
+     * marker comment and updates it; otherwise creates a new comment.
+     */
+    public any function pullrequests_comments_save(
+        required numeric pullRequestId,
+        numeric commentId=0,
+        string comment="",
+        string commentFile="",
+        string dataFile="",
+        string marker="",
+        numeric scanPageLen=100,
+        numeric maxScanPages=20,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var commentData = {};
+        if(Len(arguments.comment)){
+            commentData = {
+                "content" = {
+                    "raw" = arguments.comment
+                }
+            };
+        }
+        else if(Len(arguments.commentFile)){
+            var absCommentFile = getAbsolutePath(variables.cwd, arguments.commentFile);
+            if(!fileExists(absCommentFile)){
+                throw("Comment file not found: #absCommentFile#");
+            }
+            commentData = {
+                "content" = {
+                    "raw" = fileRead(absCommentFile)
+                }
+            };
+        }
+        else if(Len(arguments.dataFile)){
+            commentData = readJsonFile(arguments.dataFile);
+        }
+        else {
+            throw("One of comment, commentFile, or dataFile is required");
+        }
+        var markerValue = Trim(arguments.marker & "");
+        if(compareNoCase(markerValue, "true") EQ 0 OR compareNoCase(markerValue, "false") EQ 0){
+            throw("marker must be a marker string, not a boolean; use marker=statler_and_waldorf or quote your HTML marker.");
+        }
+        var legacyMarkerValue = "";
+        if(Len(markerValue) AND findNoCase("<!--", markerValue) EQ 0){
+            legacyMarkerValue = "<!-- #markerValue# -->";
+        }
+        if(!structKeyExists(commentData, "content") OR !isStruct(commentData.content)){
+            commentData.content = {};
+        }
+        if(!structKeyExists(commentData.content, "raw")){
+            commentData.content.raw = "";
+        }
+        var rawContent = commentData.content.raw & "";
+        if(Len(markerValue)){
+            var hasPlainMarker = findNoCase(markerValue, rawContent) GT 0;
+            var hasLegacyMarker = Len(legacyMarkerValue) AND findNoCase(legacyMarkerValue, rawContent) GT 0;
+            if(!hasPlainMarker AND !hasLegacyMarker){
+                if(Len(rawContent)){
+                    rawContent = rawContent & chr(10) & chr(10) & markerValue;
+                }
+                else {
+                    rawContent = markerValue;
+                }
+            }
+        }
+        commentData.content.raw = rawContent;
+
+        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
+
+        if(Int(arguments.commentId) GT 0){
+            return bb.updatePullRequestComment(
+                pullRequestId=arguments.pullRequestId,
+                commentId=Int(arguments.commentId),
+                commentData=commentData
+            );
+        }
+        if(Len(markerValue)){
+            var pageLen = Int(arguments.scanPageLen);
+            if(pageLen LTE 0){
+                pageLen = 100;
+            }
+            var pageLimit = Int(arguments.maxScanPages);
+            if(pageLimit LTE 0){
+                pageLimit = 20;
+            }
+
+            var foundCommentId = 0;
+            var pageNum = 1;
+            while(pageNum LTE pageLimit){
+                var listRaw = bb.listPullRequestComments(
+                    pullRequestId=arguments.pullRequestId,
+                    sort="-created_on",
+                    page=pageNum,
+                    pagelen=pageLen
+                );
+                if(!isSimpleValue(listRaw) OR !isJSON(listRaw)){
+                    break;
+                }
+
+                var listPayload = deserializeJson(listRaw);
+                if(
+                    !isStruct(listPayload) OR
+                    !structKeyExists(listPayload, "values") OR
+                    !isArray(listPayload.values) OR
+                    arrayLen(listPayload.values) EQ 0
+                ){
+                    break;
+                }
+
+                for(var c in listPayload.values){
+                    var existingRaw = c.content?.raw ?: "";
+                    var hasMarker = findNoCase(markerValue, existingRaw) GT 0;
+                    if(!hasMarker AND Len(legacyMarkerValue)){
+                        hasMarker = findNoCase(legacyMarkerValue, existingRaw) GT 0;
+                    }
+                    if(hasMarker){
+                        foundCommentId = Int(c.id ?: 0);
+                        break;
+                    }
+                }
+
+                if(foundCommentId GT 0){
+                    break;
+                }
+                if(!structKeyExists(listPayload, "next")){
+                    break;
+                }
+                pageNum++;
+            }
+
+            if(foundCommentId GT 0){
+                return bb.updatePullRequestComment(
+                    pullRequestId=arguments.pullRequestId,
+                    commentId=foundCommentId,
+                    commentData=commentData
+                );
+            }
+        }
+
+        return bb.createPullRequestComment(
+            pullRequestId=arguments.pullRequestId,
+            commentData=commentData
+        );
     }
 
     /**

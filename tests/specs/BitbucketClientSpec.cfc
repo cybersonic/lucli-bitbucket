@@ -29,6 +29,24 @@ component extends="testbox.system.BaseSpec" {
                 expect(call.data.pagelen).toBe(50);
             });
 
+            it("builds listPullRequestComments call with expected query parameters", function(){
+                variables.bb.listPullRequestComments(
+                    pullRequestId = 123,
+                    q = "deleted=false AND inline.path=""src/main.cfc""",
+                    sort = "-created_on",
+                    page = 2,
+                    pagelen = 30
+                );
+
+                var call = variables.bb.getLastCall();
+                expect(call.path).toBe("repositories/workspaceA/repoA/pullrequests/123/comments");
+                expect(call.method).toBe("GET");
+                expect(call.data.q).toBe('deleted=false AND inline.path="src/main.cfc"');
+                expect(call.data.sort).toBe("-created_on");
+                expect(call.data.page).toBe(2);
+                expect(call.data.pagelen).toBe(30);
+            });
+
             it("builds patch endpoint path for pullrequests_patch support", function(){
                 variables.bb.getPullRequestPatch(pullRequestId = 42);
                 var call = variables.bb.getLastCall();
