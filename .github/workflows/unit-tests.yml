@@ -36,7 +36,7 @@ jobs:
       - name: Run TestBox suite
         run: |
           set -eu
-
+          ls .
           ready=0
           i=0
           while [ "$i" -lt 60 ]; do
