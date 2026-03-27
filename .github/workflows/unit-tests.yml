@@ -10,84 +10,71 @@ on:
 jobs:
   testbox:
     runs-on: ubuntu-latest
+    container:
+      image: markdrew/lucli:snapshot
+      options: --user root
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run TestBox suite in lucli container
+      - name: Install CommandBox
+        run: |
+          apt-get update
+          apt-get install -y curl gpg apt-transport-https ca-certificates
+          curl -fsSL https://downloads.ortussolutions.com/debs/gpg | gpg --dearmor > /usr/share/keyrings/ortussolutions.gpg
+          echo "deb [signed-by=/usr/share/keyrings/ortussolutions.gpg] https://downloads.ortussolutions.com/debs/noarch /" > /etc/apt/sources.list.d/commandbox.list
+          apt-get update
+          apt-get install -y commandbox
+          box version
+
+      - name: Install dependencies
+        run: lucli install
+
+      - name: Start server
+        run: lucli server start --disable-open-browser
+
+      - name: Run TestBox suite
         run: |
           set -eu
 
-          docker run --rm \
-            --user root \
-            -v "$PWD:/workspace" \
-            -w /workspace \
-            --entrypoint /bin/sh \
-            markdrew/lucli:snapshot \
-            -lc '
-              set -eu
-              apt-get update
-              apt-get install -y curl gpg apt-transport-https ca-certificates
-              curl -fsSl https://downloads.ortussolutions.com/debs/gpg | gpg --dearmor > /usr/share/keyrings/ortussolutions.gpg
-              echo "deb [signed-by=/usr/share/keyrings/ortussolutions.gpg] https://downloads.ortussolutions.com/debs/noarch /" > /etc/apt/sources.list.d/commandbox.list
-              apt-get update
-              apt-get install -y commandbox
+          ready=0
+          i=0
+          while [ "$i" -lt 60 ]; do
+            HTTP_CODE=$(curl -sS -o test-results.json -w "%{http_code}" "http://127.0.0.1:8001/tests/index.cfm?reporter=json" || true)
+            echo "[attempt $i] HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" = "200" ]; then
+              ready=1
+              break
+            fi
+            head -c 500 test-results.json 2>/dev/null || true
+            echo ""
+            i=$((i + 1))
+            sleep 2
+          done
 
-              box version
-              
+          if [ "$ready" -ne 1 ]; then
+            echo "Timed out waiting for test runner endpoint"
+            echo "=== Last response body ==="
+            cat test-results.json 2>/dev/null || true
+            exit 1
+          fi
 
-              cleanup() {
-                lucli server stop >/dev/null 2>&1 || true
-              }
-              trap cleanup EXIT
-              lucli install
+          FAILS=$(grep -oE '"totalFail"[[:space:]]*:[[:space:]]*[0-9]+' test-results.json | grep -oE '[0-9]+' || true)
+          ERRORS=$(grep -oE '"totalError"[[:space:]]*:[[:space:]]*[0-9]+' test-results.json | grep -oE '[0-9]+' || true)
 
-              lucli server start --disable-open-browser
+          if [ -z "${FAILS:-}" ] || [ -z "${ERRORS:-}" ]; then
+            echo "Could not parse totalFail/totalError from TestBox JSON output"
+            cat test-results.json
+            exit 1
+          fi
 
-              sleep 5
-              echo "=== Debug: root URL ==="
-              curl -sS -w "\nHTTP %{http_code}" "http://127.0.0.1:8001/" 2>&1 | head -c 10000 || true
-              echo ""
-              echo "=== Debug: /tests/index.cfm ==="
-              curl -sS -w "\nHTTP %{http_code}" "http://127.0.0.1:8001/tests/index.cfm" 2>&1 | head -c 10000 || true
-              echo ""
+          if [ "$FAILS" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+            echo "TestBox failures detected (failures=$FAILS, errors=$ERRORS)"
+            exit 1
+          fi
 
-              ready=0
-              i=0
-              while [ "$i" -lt 60 ]; do
-                HTTP_CODE=$(curl -sS -o test-results.json -w "%{http_code}" "http://127.0.0.1:8001/tests/index.cfm?reporter=json" || true)
-                echo "[attempt $i] HTTP $HTTP_CODE"
-                if [ "$HTTP_CODE" = "200" ]; then
-                  ready=1
-                  break
-                fi
-                # Show first 500 chars of the response for debugging
-                head -c 500 test-results.json 2>/dev/null || true
-                echo ""
-                i=$((i + 1))
-                sleep 2
-              done
+          echo "TestBox passed (failures=$FAILS, errors=$ERRORS)"
 
-              if [ "$ready" -ne 1 ]; then
-                echo "Timed out waiting for test runner endpoint"
-                echo "=== Last response body ==="
-                cat test-results.json 2>/dev/null || true
-                exit 1
-              fi
-
-              FAILS=$(grep -oE "\"totalFail\"[[:space:]]*:[[:space:]]*[0-9]+" test-results.json | grep -oE "[0-9]+" || true)
-              ERRORS=$(grep -oE "\"totalError\"[[:space:]]*:[[:space:]]*[0-9]+" test-results.json | grep -oE "[0-9]+" || true)
-
-              if [ -z "${FAILS:-}" ] || [ -z "${ERRORS:-}" ]; then
-                echo "Could not parse totalFail/totalError from TestBox JSON output"
-                cat test-results.json
-                exit 1
-              fi
-
-              if [ "$FAILS" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
-                echo "TestBox failures detected (failures=$FAILS, errors=$ERRORS)"
-                exit 1
-              fi
-
-              echo "TestBox passed (failures=$FAILS, errors=$ERRORS)"
-            '
+      - name: Stop server
+        if: always()
+        run: lucli server stop >/dev/null 2>&1 || true
