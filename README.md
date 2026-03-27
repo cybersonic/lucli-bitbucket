@@ -57,3 +57,16 @@ export BITBUCKET_AUTH_USER=you@example.com
 export BITBUCKET_AUTH_TOKEN=...
 ```
 
+## Docker images
+
+This repository can build two container variants from the same source:
+
+- `markdrew/bitbucket-lucli:{latest,snapshot}` for general LuCLI and pipeline usage
+- `markdrew/bitbucket-mcp:{latest,snapshot}` for MCP usage via `lucli mcp bitbucket`
+
+Both images copy this module directly into LuCLI's modules directory inside the container instead of installing from a registry.
+
+At the moment, GitHub Actions is set up to build and validate these images only. Publishing/pushing can be enabled later once the naming and runtime behavior are settled.
+
+During CI container builds, `module.json` can be stamped with a build/release version for the image contents without committing that version change back to the repository.
+

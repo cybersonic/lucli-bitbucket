@@ -49,6 +49,49 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase("public any function reports_delete(", variables.moduleSource) GT 0).toBeTrue();
             });
 
+            it("contains pipelines command wrappers", function(){
+                expect(findNoCase("public any function pipelines(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_create(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_get(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_stop(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_steps(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_steps_get(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_steps_log(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_caches(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_runners(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_schedules(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_ssh_key_pair(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_ssh_known_hosts(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_config_variables(", variables.moduleSource) GT 0).toBeTrue();
+                expect(findNoCase("public any function pipelines_environments_variables(", variables.moduleSource) GT 0).toBeTrue();
+            });
+
+            it("pipelines exposes filter parameters and forwards them to the client", function(){
+                var fnStart = findNoCase("public any function pipelines(", variables.moduleSource);
+                expect(fnStart GT 0).toBeTrue();
+
+                var fnSlice = mid(variables.moduleSource, fnStart, 2600);
+                expect(findNoCase("string creatorUuid=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetRefType=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetRefName=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetBranch=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetCommitHash=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetSelectorPattern=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string targetSelectorType=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string createdOn=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string triggerType=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("creatorUuid=arguments.creatorUuid", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetRefType=arguments.targetRefType", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetRefName=arguments.targetRefName", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetBranch=arguments.targetBranch", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetCommitHash=arguments.targetCommitHash", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetSelectorPattern=arguments.targetSelectorPattern", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("targetSelectorType=arguments.targetSelectorType", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("createdOn=arguments.createdOn", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("triggerType=arguments.triggerType", fnSlice) GT 0).toBeTrue();
+            });
+
             it("contains reports annotations list/get/post/create/put/delete wrappers", function(){
                 expect(findNoCase("public any function reports_annotations(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("public any function reports_annotations_get(", variables.moduleSource) GT 0).toBeTrue();

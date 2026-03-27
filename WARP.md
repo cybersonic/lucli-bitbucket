@@ -69,6 +69,10 @@ When implementing a new REST endpoint:
 - Test results can be also be obtained by going to `http://localhost:8001/tests/?reporter=json` to get a JSON report of the test results.
 - Mocking is supported by using the `testbox` framework.
 
+## CI / Docker scripting
+- For GitHub Actions workflows, Docker build steps, and pipeline automation in this project, prefer LuCLI commands and CFML over Python or other external scripting runtimes.
+- If build logic needs to transform project files (for example version stamping), implement that logic in LuCLI/CFML so the project stays consistent with its runtime and tooling.
+
 ## Footguns / notes
 - Do not use the variable name `client` in CFML code.
   - `client` is a built-in CFML scope (client storage). In some runtimes it may be disabled, and references like `client.foo` will error.

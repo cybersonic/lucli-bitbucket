@@ -722,6 +722,615 @@ component {
         );
     }
 
+    // --- Pipelines (API group: /pipelines) ---
+
+    function listPipelines(
+        string creatorUuid="",
+        string targetRefType="",
+        string targetRefName="",
+        string targetBranch="",
+        string targetCommitHash="",
+        string targetSelectorPattern="",
+        string targetSelectorType="",
+        string createdOn="",
+        string triggerType="",
+        string status="",
+        string sort="",
+        numeric page=0,
+        numeric pagelen=0
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines";
+
+        var params = {};
+        if(Len(arguments.creatorUuid)){
+            params["creator.uuid"] = arguments.creatorUuid;
+        }
+        if(Len(arguments.targetRefType)){
+            params["target.ref_type"] = arguments.targetRefType;
+        }
+        if(Len(arguments.targetRefName)){
+            params["target.ref_name"] = arguments.targetRefName;
+        }
+        if(Len(arguments.targetBranch)){
+            params["target.branch"] = arguments.targetBranch;
+        }
+        if(Len(arguments.targetCommitHash)){
+            params["target.commit.hash"] = arguments.targetCommitHash;
+        }
+        if(Len(arguments.targetSelectorPattern)){
+            params["target.selector.pattern"] = arguments.targetSelectorPattern;
+        }
+        if(Len(arguments.targetSelectorType)){
+            params["target.selector.type"] = arguments.targetSelectorType;
+        }
+        if(Len(arguments.createdOn)){
+            params.created_on = arguments.createdOn;
+        }
+        if(Len(arguments.triggerType)){
+            params.trigger_type = arguments.triggerType;
+        }
+        if(Len(arguments.status)){
+            params.status = arguments.status;
+        }
+        if(Len(arguments.sort)){
+            params.sort = arguments.sort;
+        }
+        if(arguments.page GT 0){
+            params.page = arguments.page;
+        }
+        if(arguments.pagelen GT 0){
+            params.pagelen = arguments.pagelen;
+        }
+
+        return doCall(
+            path=path,
+            method="GET",
+            data=params
+        );
+    }
+
+    function runPipeline(
+        required struct pipelineData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=arguments.pipelineData
+        );
+    }
+
+    function getPipeline(
+        required string pipelineUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function listPipelineSteps(
+        required string pipelineUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStep(
+        required string pipelineUuid,
+        required string stepUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStepLog(
+        required string pipelineUuid,
+        required string stepUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#/log";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStepLogs(
+        required string pipelineUuid,
+        required string stepUuid,
+        required string logUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#/logs/#arguments.logUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStepTestReports(
+        required string pipelineUuid,
+        required string stepUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#/test_reports";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStepTestCases(
+        required string pipelineUuid,
+        required string stepUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#/test_reports/test_cases";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineStepTestCaseReasons(
+        required string pipelineUuid,
+        required string stepUuid,
+        required string testCaseUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/steps/#arguments.stepUuid#/test_reports/test_cases/#arguments.testCaseUuid#/test_case_reasons";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function stopPipeline(
+        required string pipelineUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines/#arguments.pipelineUuid#/stopPipeline";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data={}
+        );
+    }
+
+    function listPipelineCaches(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/caches";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function deletePipelineCaches(
+        string name=""
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/caches";
+
+        var params = {};
+        if(Len(arguments.name)){
+            params.name = arguments.name;
+        }
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data=params
+        );
+    }
+
+    function deletePipelineCache(
+        required string cacheUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/caches/#arguments.cacheUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function getPipelineCacheContentUri(
+        required string cacheUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/caches/#arguments.cacheUuid#/content-uri";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function listPipelineRunners(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/runners";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPipelineRunner(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/runners";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data={}
+        );
+    }
+
+    function getPipelineRunner(
+        required string runnerUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/runners/#arguments.runnerUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelineRunner(
+        required string runnerUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/runners/#arguments.runnerUuid#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data={}
+        );
+    }
+
+    function deletePipelineRunner(
+        required string runnerUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines-config/runners/#arguments.runnerUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function getPipelinesConfig(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelinesConfig(
+        required struct configData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.configData
+        );
+    }
+
+    function updatePipelinesBuildNumber(
+        required struct buildNumberData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/build_number";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.buildNumberData
+        );
+    }
+
+    function listPipelineSchedules(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPipelineSchedule(
+        required struct scheduleData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=arguments.scheduleData
+        );
+    }
+
+    function getPipelineSchedule(
+        required string scheduleUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules/#arguments.scheduleUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelineSchedule(
+        required string scheduleUuid,
+        required struct scheduleData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules/#arguments.scheduleUuid#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.scheduleData
+        );
+    }
+
+    function deletePipelineSchedule(
+        required string scheduleUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules/#arguments.scheduleUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPipelineScheduleExecutions(
+        required string scheduleUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/schedules/#arguments.scheduleUuid#/executions";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function getPipelineSshKeyPair(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/key_pair";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelineSshKeyPair(
+        required struct keyPairData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/key_pair";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.keyPairData
+        );
+    }
+
+    function deletePipelineSshKeyPair(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/key_pair";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPipelineKnownHosts(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/known_hosts";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPipelineKnownHost(
+        required struct knownHostData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/known_hosts";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=arguments.knownHostData
+        );
+    }
+
+    function getPipelineKnownHost(
+        required string knownHostUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/known_hosts/#arguments.knownHostUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelineKnownHost(
+        required string knownHostUuid,
+        required struct knownHostData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/known_hosts/#arguments.knownHostUuid#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.knownHostData
+        );
+    }
+
+    function deletePipelineKnownHost(
+        required string knownHostUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/ssh/known_hosts/#arguments.knownHostUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPipelineVariables(){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/variables";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPipelineVariable(
+        required struct variableData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/variables";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=arguments.variableData
+        );
+    }
+
+    function getPipelineVariable(
+        required string variableUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/variables/#arguments.variableUuid#";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function updatePipelineVariable(
+        required string variableUuid,
+        required struct variableData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/variables/#arguments.variableUuid#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.variableData
+        );
+    }
+
+    function deletePipelineVariable(
+        required string variableUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/pipelines_config/variables/#arguments.variableUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
+    function listPipelineEnvironmentVariables(
+        required string environmentUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/deployments_config/environments/#arguments.environmentUuid#/variables";
+
+        return doCall(
+            path=path,
+            method="GET",
+            data={}
+        );
+    }
+
+    function createPipelineEnvironmentVariable(
+        required string environmentUuid,
+        required struct variableData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/deployments_config/environments/#arguments.environmentUuid#/variables";
+
+        return doCall(
+            path=path,
+            method="POST",
+            data=arguments.variableData
+        );
+    }
+
+    function updatePipelineEnvironmentVariable(
+        required string environmentUuid,
+        required string variableUuid,
+        required struct variableData
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/deployments_config/environments/#arguments.environmentUuid#/variables/#arguments.variableUuid#";
+
+        return doCall(
+            path=path,
+            method="PUT",
+            data=arguments.variableData
+        );
+    }
+
+    function deletePipelineEnvironmentVariable(
+        required string environmentUuid,
+        required string variableUuid
+    ){
+        var path = "repositories/#variables.workspace#/#variables.repoSlug#/deployments_config/environments/#arguments.environmentUuid#/variables/#arguments.variableUuid#";
+
+        return doCall(
+            path=path,
+            method="DELETE",
+            data={}
+        );
+    }
+
     function listDefaultReviewers(
         numeric page=0,
         numeric pagelen=0

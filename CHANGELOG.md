@@ -16,6 +16,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Decorated helper command `weeklyReleaseContext` to build a weekly merged-to-main release context (PRs + optional diffstat/commits) without a git clone.
 - `weeklyReleaseContext` supports optional per-PR `diff` inclusion via `includeDiff=true`; by default, PR payloads exclude full diff text to reduce output size.
 - Reports API-style subcommands: `reports`, `reports_get`, `reports_create`, `reports_delete`, `reports_annotations`, `reports_annotations_get`, `reports_annotations_post`, `reports_annotations_create`, `reports_annotations_put`, and `reports_annotations_delete`.
+- Pipelines API support in `BitbucketClient.cfc` and `Module.cfc`, including pipeline runs/listing, pipeline steps/logs/test reports, stop endpoint, caches, runners, config/build number, schedules, SSH key pair/known hosts, repository variables, and deployment environment variables.
+- Container packaging for two image variants built from the same source: `markdrew/bitbucket-lucli` for CLI/pipeline usage and `markdrew/bitbucket-mcp` for MCP usage.
 
 ### Changed
 - `BitbucketClient.doCall()` now returns response content as a string (including JSON) rather than deserializing JSON into CFML structs/arrays. This keeps module output pipe-friendly (e.g. `lucli bitbucket pullrequests | jq`) until LuCLI implements a global `--format`.
@@ -27,3 +29,4 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `BitbucketClient.downloadFile()` forces a raw response (no JSON parsing) to ensure file downloads always write correct content.
 - Legacy report wrappers are now explicitly deprecated in code comments while remaining supported for backward compatibility (`createReport`, `createAnnotations`, `postReport`, `postReportAnnotations`).
 - Personal API token auth mode now validates `BITBUCKET_AUTH_USER` as an email address via `isValid("email", ...)`.
+- Docker image builds now use a shared multi-target `Dockerfile`, and CI can stamp `module.json` with a snapshot or release version for container builds without committing the change.

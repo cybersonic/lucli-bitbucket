@@ -1150,6 +1150,813 @@ component extends="modules.BaseModule" {
             );
     }
 
+    // --- Pipelines (API group: /pipelines) ---
+
+    /**
+     * List pipelines for the repo.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines
+     */
+    public any function pipelines(
+        string creatorUuid="",
+        string targetRefType="",
+        string targetRefName="",
+        string targetBranch="",
+        string targetCommitHash="",
+        string targetSelectorPattern="",
+        string targetSelectorType="",
+        string createdOn="",
+        string triggerType="",
+        string status="",
+        string sort="",
+        numeric page=0,
+        numeric pagelen=0,
+        string workspace="",
+        string repoSlug="",
+        string authToken="",
+        string format=""
+    ){
+        var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
+        var res = bb.listPipelines(
+            creatorUuid=arguments.creatorUuid,
+            targetRefType=arguments.targetRefType,
+            targetRefName=arguments.targetRefName,
+            targetBranch=arguments.targetBranch,
+            targetCommitHash=arguments.targetCommitHash,
+            targetSelectorPattern=arguments.targetSelectorPattern,
+            targetSelectorType=arguments.targetSelectorType,
+            createdOn=arguments.createdOn,
+            triggerType=arguments.triggerType,
+            status=arguments.status,
+            sort=arguments.sort,
+            page=Int(arguments.page),
+            pagelen=Int(arguments.pagelen)
+        );
+
+        if(lCase(arguments.format) EQ "json" OR lCase(arguments.format) EQ "json-compact"){
+            if(isSimpleValue(res) AND isJSON(res)){
+                return res;
+            }
+            return serializeJson(res, lCase(arguments.format) EQ "json-compact");
+        }
+
+        return res;
+    }
+
+    /**
+     * Run a pipeline.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines
+     */
+    public any function pipelines_create(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .runPipeline(
+                pipelineData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Alias wrapper for running a pipeline.
+     */
+    public any function pipelines_run(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return pipelines_create(
+            dataFile=arguments.dataFile,
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken
+        );
+    }
+
+    /**
+     * Get a pipeline by uuid.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}
+     */
+    public any function pipelines_get(
+        required string pipelineUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipeline(
+                pipelineUuid=arguments.pipelineUuid
+            );
+    }
+
+    /**
+     * Stop a pipeline.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/stopPipeline
+     */
+    public any function pipelines_stop(
+        required string pipelineUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .stopPipeline(
+                pipelineUuid=arguments.pipelineUuid
+            );
+    }
+
+    /**
+     * List steps for a pipeline.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps
+     */
+    public any function pipelines_steps(
+        required string pipelineUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineSteps(
+                pipelineUuid=arguments.pipelineUuid
+            );
+    }
+
+    /**
+     * Get a step of a pipeline.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}
+     */
+    public any function pipelines_steps_get(
+        required string pipelineUuid,
+        required string stepUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStep(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid
+            );
+    }
+
+    /**
+     * Get the log file for a step.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}/log
+     */
+    public any function pipelines_steps_log(
+        required string pipelineUuid,
+        required string stepUuid,
+        string outputPath="",
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var logContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStepLog(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid
+            );
+
+        if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            fileWrite(absOutputPath, logContent);
+        }
+
+        return logContent;
+    }
+
+    /**
+     * Get container logs for a pipeline step.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}/logs/{log_uuid}
+     */
+    public any function pipelines_steps_logs_get(
+        required string pipelineUuid,
+        required string stepUuid,
+        required string logUuid,
+        string outputPath="",
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var logContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStepLogs(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid,
+                logUuid=arguments.logUuid
+            );
+
+        if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            fileWrite(absOutputPath, logContent);
+        }
+
+        return logContent;
+    }
+
+    /**
+     * Get summary test reports for a pipeline step.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}/test_reports
+     */
+    public any function pipelines_steps_test_reports(
+        required string pipelineUuid,
+        required string stepUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStepTestReports(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid
+            );
+    }
+
+    /**
+     * Get test cases for a pipeline step.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}/test_reports/test_cases
+     */
+    public any function pipelines_steps_test_reports_test_cases(
+        required string pipelineUuid,
+        required string stepUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStepTestCases(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid
+            );
+    }
+
+    /**
+     * Get test case reasons for a pipeline step test case.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines/{pipeline_uuid}/steps/{step_uuid}/test_reports/test_cases/{test_case_uuid}/test_case_reasons
+     */
+    public any function pipelines_steps_test_reports_test_cases_reasons(
+        required string pipelineUuid,
+        required string stepUuid,
+        required string testCaseUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineStepTestCaseReasons(
+                pipelineUuid=arguments.pipelineUuid,
+                stepUuid=arguments.stepUuid,
+                testCaseUuid=arguments.testCaseUuid
+            );
+    }
+
+    /**
+     * List pipeline caches.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/caches
+     */
+    public any function pipelines_config_caches(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineCaches();
+    }
+
+    /**
+     * Delete pipeline caches (optionally by cache name).
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines-config/caches
+     */
+    public any function pipelines_config_caches_delete(
+        string name="",
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineCaches(
+                name=arguments.name
+            );
+    }
+
+    /**
+     * Delete a specific pipeline cache by uuid.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines-config/caches/{cache_uuid}
+     */
+    public any function pipelines_config_caches_delete_cache(
+        required string cacheUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineCache(
+                cacheUuid=arguments.cacheUuid
+            );
+    }
+
+    /**
+     * Get cache content URI for a cache uuid.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/caches/{cache_uuid}/content-uri
+     */
+    public any function pipelines_config_caches_content_uri(
+        required string cacheUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineCacheContentUri(
+                cacheUuid=arguments.cacheUuid
+            );
+    }
+
+    /**
+     * List repository pipeline runners.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/runners
+     */
+    public any function pipelines_config_runners(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineRunners();
+    }
+
+    /**
+     * Create a repository pipeline runner.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines-config/runners
+     */
+    public any function pipelines_config_runners_create(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createPipelineRunner();
+    }
+
+    /**
+     * Get a repository pipeline runner.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/runners/{runner_uuid}
+     */
+    public any function pipelines_config_runners_get(
+        required string runnerUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineRunner(
+                runnerUuid=arguments.runnerUuid
+            );
+    }
+
+    /**
+     * Update a repository pipeline runner.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines-config/runners/{runner_uuid}
+     */
+    public any function pipelines_config_runners_update(
+        required string runnerUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineRunner(
+                runnerUuid=arguments.runnerUuid
+            );
+    }
+
+    /**
+     * Delete a repository pipeline runner.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines-config/runners/{runner_uuid}
+     */
+    public any function pipelines_config_runners_delete(
+        required string runnerUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineRunner(
+                runnerUuid=arguments.runnerUuid
+            );
+    }
+
+    /**
+     * Get pipelines configuration.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config
+     */
+    public any function pipelines_config(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelinesConfig();
+    }
+
+    /**
+     * Update pipelines configuration.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config
+     */
+    public any function pipelines_config_update(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelinesConfig(
+                configData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Update next pipelines build number.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config/build_number
+     */
+    public any function pipelines_config_build_number_update(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelinesBuildNumber(
+                buildNumberData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * List pipeline schedules.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/schedules
+     */
+    public any function pipelines_config_schedules(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineSchedules();
+    }
+
+    /**
+     * Create a pipeline schedule.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines_config/schedules
+     */
+    public any function pipelines_config_schedules_create(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createPipelineSchedule(
+                scheduleData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Get a pipeline schedule.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/schedules/{schedule_uuid}
+     */
+    public any function pipelines_config_schedules_get(
+        required string scheduleUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineSchedule(
+                scheduleUuid=arguments.scheduleUuid
+            );
+    }
+
+    /**
+     * Update a pipeline schedule.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config/schedules/{schedule_uuid}
+     */
+    public any function pipelines_config_schedules_update(
+        required string scheduleUuid,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineSchedule(
+                scheduleUuid=arguments.scheduleUuid,
+                scheduleData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete a pipeline schedule.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines_config/schedules/{schedule_uuid}
+     */
+    public any function pipelines_config_schedules_delete(
+        required string scheduleUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineSchedule(
+                scheduleUuid=arguments.scheduleUuid
+            );
+    }
+
+    /**
+     * List executions of a schedule.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/schedules/{schedule_uuid}/executions
+     */
+    public any function pipelines_config_schedules_executions(
+        required string scheduleUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineScheduleExecutions(
+                scheduleUuid=arguments.scheduleUuid
+            );
+    }
+
+    /**
+     * Get pipelines SSH key pair.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/key_pair
+     */
+    public any function pipelines_config_ssh_key_pair(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineSshKeyPair();
+    }
+
+    /**
+     * Update pipelines SSH key pair.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/key_pair
+     */
+    public any function pipelines_config_ssh_key_pair_update(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineSshKeyPair(
+                keyPairData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete pipelines SSH key pair.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/key_pair
+     */
+    public any function pipelines_config_ssh_key_pair_delete(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineSshKeyPair();
+    }
+
+    /**
+     * List pipelines known hosts.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts
+     */
+    public any function pipelines_config_ssh_known_hosts(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineKnownHosts();
+    }
+
+    /**
+     * Create pipelines known host.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts
+     */
+    public any function pipelines_config_ssh_known_hosts_create(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createPipelineKnownHost(
+                knownHostData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Get pipelines known host by uuid.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/{known_host_uuid}
+     */
+    public any function pipelines_config_ssh_known_hosts_get(
+        required string knownHostUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineKnownHost(
+                knownHostUuid=arguments.knownHostUuid
+            );
+    }
+
+    /**
+     * Update pipelines known host.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/{known_host_uuid}
+     */
+    public any function pipelines_config_ssh_known_hosts_update(
+        required string knownHostUuid,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineKnownHost(
+                knownHostUuid=arguments.knownHostUuid,
+                knownHostData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete pipelines known host.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts/{known_host_uuid}
+     */
+    public any function pipelines_config_ssh_known_hosts_delete(
+        required string knownHostUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineKnownHost(
+                knownHostUuid=arguments.knownHostUuid
+            );
+    }
+
+    /**
+     * List pipelines repository variables.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/variables
+     */
+    public any function pipelines_config_variables(
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineVariables();
+    }
+
+    /**
+     * Create pipelines repository variable.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines_config/variables
+     */
+    public any function pipelines_config_variables_create(
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createPipelineVariable(
+                variableData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Get pipelines repository variable by uuid.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/variables/{variable_uuid}
+     */
+    public any function pipelines_config_variables_get(
+        required string variableUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .getPipelineVariable(
+                variableUuid=arguments.variableUuid
+            );
+    }
+
+    /**
+     * Update pipelines repository variable.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/pipelines_config/variables/{variable_uuid}
+     */
+    public any function pipelines_config_variables_update(
+        required string variableUuid,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineVariable(
+                variableUuid=arguments.variableUuid,
+                variableData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete pipelines repository variable.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines_config/variables/{variable_uuid}
+     */
+    public any function pipelines_config_variables_delete(
+        required string variableUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineVariable(
+                variableUuid=arguments.variableUuid
+            );
+    }
+
+    /**
+     * List variables for an environment.
+     * Maps to GET /repositories/{workspace}/{repo_slug}/deployments_config/environments/{environment_uuid}/variables
+     */
+    public any function pipelines_environments_variables(
+        required string environmentUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .listPipelineEnvironmentVariables(
+                environmentUuid=arguments.environmentUuid
+            );
+    }
+
+    /**
+     * Create a variable for an environment.
+     * Maps to POST /repositories/{workspace}/{repo_slug}/deployments_config/environments/{environment_uuid}/variables
+     */
+    public any function pipelines_environments_variables_create(
+        required string environmentUuid,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .createPipelineEnvironmentVariable(
+                environmentUuid=arguments.environmentUuid,
+                variableData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Update a variable for an environment.
+     * Maps to PUT /repositories/{workspace}/{repo_slug}/deployments_config/environments/{environment_uuid}/variables/{variable_uuid}
+     */
+    public any function pipelines_environments_variables_update(
+        required string environmentUuid,
+        required string variableUuid,
+        required string dataFile,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePipelineEnvironmentVariable(
+                environmentUuid=arguments.environmentUuid,
+                variableUuid=arguments.variableUuid,
+                variableData=readJsonFile(arguments.dataFile)
+            );
+    }
+
+    /**
+     * Delete a variable for an environment.
+     * Maps to DELETE /repositories/{workspace}/{repo_slug}/deployments_config/environments/{environment_uuid}/variables/{variable_uuid}
+     */
+    public any function pipelines_environments_variables_delete(
+        required string environmentUuid,
+        required string variableUuid,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .deletePipelineEnvironmentVariable(
+                environmentUuid=arguments.environmentUuid,
+                variableUuid=arguments.variableUuid
+            );
+    }
     // --- Refs (API group: /refs) ---
 
     /**

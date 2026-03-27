@@ -1,0 +1,65 @@
+name: Build Docker Images
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: lucli
+            imageName: markdrew/bitbucket-lucli
+            expectedEntrypoint: '["lucli","bitbucket"]'
+          - target: mcp
+            imageName: markdrew/bitbucket-mcp
+            expectedEntrypoint: '["lucli","mcp","bitbucket"]'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stamp module version for container build
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            -e GITHUB_REF \
+            -e GITHUB_REF_NAME \
+            -e GITHUB_RUN_NUMBER \
+            --entrypoint lucli \
+            markdrew/lucli:snapshot \
+            devops/stamp-version.cfm
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.imageName }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: ${{ matrix.target }}
+          load: true
+          provenance: false
+          tags: ${{ matrix.imageName }}:ci-${{ github.run_id }}
+
+      - name: Verify module is installed
+        run: |
+          docker run --rm \
+            --entrypoint lucli \
+            ${{ matrix.imageName }}:ci-${{ github.run_id }} \
+            modules list
+
+      - name: Verify default entrypoint
+        run: |
+          ACTUAL="$(docker image inspect ${{ matrix.imageName }}:ci-${{ github.run_id }} --format '{{json .Config.Entrypoint}}')"
+          test "$ACTUAL" = '${{ matrix.expectedEntrypoint }}'
