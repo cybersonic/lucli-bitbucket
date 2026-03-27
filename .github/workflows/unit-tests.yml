@@ -44,6 +44,14 @@ jobs:
 
               lucli server start --disable-open-browser
 
+              sleep 5
+              echo "=== Debug: root URL ==="
+              curl -sS -w "\nHTTP %{http_code}" "http://127.0.0.1:8001/" 2>&1 | head -c 2000 || true
+              echo ""
+              echo "=== Debug: /tests/index.cfm ==="
+              curl -sS -w "\nHTTP %{http_code}" "http://127.0.0.1:8001/tests/index.cfm" 2>&1 | head -c 5000 || true
+              echo ""
+
               ready=0
               i=0
               while [ "$i" -lt 60 ]; do
