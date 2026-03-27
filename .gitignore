@@ -1,6 +1,6 @@
 test.sh
 examples/
 WEB-INF/
-index.cfm
+/index.cfm
 test_02.cfm
 dependencies/
