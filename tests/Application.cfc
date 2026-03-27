@@ -11,6 +11,7 @@ component {
 
 	// any mappings go here, we create one that points to the root called test.
 	this.mappings[ "/tests" ] = getDirectoryFromPath( getCurrentTemplatePath() );
+	this.mappings[ "/testbox" ] = getDirectoryFromPath( getCurrentTemplatePath() ) & "../dependencies/testbox";
 	this.mappings[ "/modules" ] = expandPath( "/tests/stubs/modules" );
 
 	// any orm definitions go here.
