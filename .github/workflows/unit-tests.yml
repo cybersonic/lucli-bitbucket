@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Fix workspace permissions
+        run: chmod -R a+rX .
+
       - name: Install CommandBox
         run: |
           apt-get update
