@@ -39,27 +39,20 @@ jobs:
       - name: Run TestBox suite
         run: |
           set -eu
-          ls .
-          pwd
+
           ready=0
           i=0
           while [ "$i" -lt 60 ]; do
-            HTTP_CODE=$(curl -sS -o test-results.json -w "%{http_code}" "http://127.0.0.1:8001/tests/index.cfm?reporter=json" || true)
-            echo "[attempt $i] HTTP $HTTP_CODE"
-            if [ "$HTTP_CODE" = "200" ]; then
+            if curl -fsS -o test-results.json "http://127.0.0.1:8001/tests/index.cfm?reporter=json"; then
               ready=1
               break
             fi
-            head -c 500 test-results.json 2>/dev/null || true
-            echo ""
             i=$((i + 1))
             sleep 2
           done
 
           if [ "$ready" -ne 1 ]; then
             echo "Timed out waiting for test runner endpoint"
-            echo "=== Last response body ==="
-            cat test-results.json 2>/dev/null || true
             exit 1
           fi
 
