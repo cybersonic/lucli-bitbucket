@@ -393,6 +393,35 @@ component {
         );
     }
 
+    function updatePullRequestReviewers(
+        required numeric pullRequestId,
+        required array reviewerUuids
+    ){
+        var reviewers = [];
+        for(var reviewerUuid in arguments.reviewerUuids){
+            var uuidValue = trim(reviewerUuid & "");
+            if(!Len(uuidValue)){
+                continue;
+            }
+            if(left(uuidValue, 1) NEQ "{"){
+                uuidValue = "{#uuidValue#";
+            }
+            if(right(uuidValue, 1) NEQ "}"){
+                uuidValue = "#uuidValue#}";
+            }
+            arrayAppend(reviewers, { uuid = uuidValue });
+        }
+
+        if(!arrayLen(reviewers)){
+            throw("reviewerUuids must contain at least one UUID");
+        }
+
+        return updatePullRequest(
+            pullRequestId=arguments.pullRequestId,
+            pullRequestData={ reviewers = reviewers }
+        );
+    }
+
     function declinePullRequest(
         required numeric pullRequestId
     ){

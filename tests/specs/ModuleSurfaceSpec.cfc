@@ -42,6 +42,19 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase(".createPullRequestComment(", fnSlice) GT 0).toBeTrue();
             });
 
+            it("addReviewers helper accepts reviewer UUID list and delegates reviewer update", function(){
+                var fnStart = findNoCase("public any function addReviewers(", variables.moduleSource);
+                expect(fnStart GT 0).toBeTrue();
+                var fnSlice = mid(variables.moduleSource, fnStart, 2400);
+                expect(findNoCase("required numeric pullRequestId", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("required string reviewerUuids", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string workspace=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string repoSlug=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("string authToken=", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase("listToArray(arguments.reviewerUuids", fnSlice) GT 0).toBeTrue();
+                expect(findNoCase(".updatePullRequestReviewers(", fnSlice) GT 0).toBeTrue();
+            });
+
             it("contains reports list/get/create/delete wrappers", function(){
                 expect(findNoCase("public any function reports(", variables.moduleSource) GT 0).toBeTrue();
                 expect(findNoCase("public any function reports_get(", variables.moduleSource) GT 0).toBeTrue();

@@ -69,6 +69,25 @@ component extends="testbox.system.BaseSpec" {
                 expect(call.method).toBe("POST");
                 expect(call.data.title).toBe("Example PR");
             });
+
+            it("updates pull request reviewers via PUT payload", function(){
+                variables.bb.updatePullRequestReviewers(
+                    pullRequestId = 18398,
+                    reviewerUuids = [
+                        "{fc532bd5-a4ca-4e22-b45c-d8216bb05033}",
+                        "{ff8b25fa-f402-4c21-b9a5-cef5f2d55b5c}",
+                        "{3a587a5e-2603-4e03-85ae-5f6e57948f70}"
+                    ]
+                );
+
+                var call = variables.bb.getLastCall();
+                expect(call.path).toBe("repositories/workspaceA/repoA/pullrequests/18398");
+                expect(call.method).toBe("PUT");
+                expect(arrayLen(call.data.reviewers)).toBe(3);
+                expect(call.data.reviewers[1].uuid).toBe("{fc532bd5-a4ca-4e22-b45c-d8216bb05033}");
+                expect(call.data.reviewers[2].uuid).toBe("{ff8b25fa-f402-4c21-b9a5-cef5f2d55b5c}");
+                expect(call.data.reviewers[3].uuid).toBe("{3a587a5e-2603-4e03-85ae-5f6e57948f70}");
+            });
             it("builds reports endpoint paths for list/get/delete", function(){
                 variables.bb.listReports(commit = "abc123", page = 2, pagelen = 50);
                 var listCall = variables.bb.getLastCall();

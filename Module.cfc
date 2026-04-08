@@ -2371,6 +2371,45 @@ component extends="modules.BaseModule" {
     }
 
     /**
+     * Decorated helper: add reviewers to an existing pull request.
+     * Updates PR reviewers via PUT /repositories/{workspace}/{repo_slug}/pullrequests/{pull_request_id}
+     */
+    public any function addReviewers(
+        required numeric pullRequestId,
+        required string reviewerUuids,
+        string workspace="",
+        string repoSlug="",
+        string authToken=""
+    ){
+        var reviewerUuidList = listToArray(arguments.reviewerUuids, ",");
+        var normalizedReviewerUuids = [];
+
+        for(var reviewerUuid in reviewerUuidList){
+            var uuidValue = trim(reviewerUuid & "");
+            if(!Len(uuidValue)){
+                continue;
+            }
+            if(left(uuidValue, 1) NEQ "{"){
+                uuidValue = "{#uuidValue#";
+            }
+            if(right(uuidValue, 1) NEQ "}"){
+                uuidValue = "#uuidValue#}";
+            }
+            arrayAppend(normalizedReviewerUuids, uuidValue);
+        }
+
+        if(!arrayLen(normalizedReviewerUuids)){
+            throw("reviewerUuids must contain at least one UUID");
+        }
+
+        return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
+            .updatePullRequestReviewers(
+                pullRequestId=arguments.pullRequestId,
+                reviewerUuids=normalizedReviewerUuids
+            );
+    }
+
+    /**
      * Return one combined payload for a single pull request:
      * - PR metadata
      * - Diffstat (auto-paginated)
