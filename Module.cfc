@@ -2597,6 +2597,30 @@ component extends="modules.BaseModule" {
         return foundAnnotations;
     }
 
+    /**
+     * Simple helper to convert a YAML file to native CFML data.
+     * Optionally writes JSON output to disk.
+     */
+    public any function convertYamlToJson(
+        required string filePath,
+        string outputPath=""
+    ){
+        var absInputPath = getAbsolutePath(variables.cwd, arguments.filePath);
+        if(!fileExists(absInputPath)){
+            throw("YAML file not found: #absInputPath#");
+        }
+
+        var yamlReader = new YAML2CFML();
+        var yamlData = yamlReader.read(absInputPath);
+
+        if(Len(arguments.outputPath)){
+            var absOutputPath = getAbsolutePath(variables.cwd, arguments.outputPath);
+            fileWrite(absOutputPath, serializeJson(yamlData, true));
+        }
+
+        return yamlData;
+    }
+
 
 
     /**
