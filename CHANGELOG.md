@@ -28,6 +28,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - `pullrequests_comments` / `listPullRequestComments()` now accept Bitbucket `q` and `sort` filtering parameters (in addition to `page` and `pagelen`).
 - `pullrequests_comments_save` now normalizes plain marker keys into HTML comment markers (e.g. `statler_and_waldorf` -> `<!-- statler_and_waldorf -->`) for marker-based find/update/create behavior.
 - `Module.cfc` now defaults to `showHelp()` when no `--action` is provided; legacy `--action=<publicFunctionName>` dispatch is still supported.
+- `reports_annotations_post` / `postReportAnnotations` now treat empty annotation arrays as a no-op (returns an empty array) instead of throwing, so filtered runs with zero matches do not fail the command.
 - `BitbucketClient.downloadFile()` forces a raw response (no JSON parsing) to ensure file downloads always write correct content.
 - Legacy report wrappers are now explicitly deprecated in code comments while remaining supported for backward compatibility (`createReport`, `createAnnotations`, `postReport`, `postReportAnnotations`).
 - Personal API token auth mode now validates `BITBUCKET_AUTH_USER` as an email address via `isValid("email", ...)`.

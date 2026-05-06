@@ -146,6 +146,20 @@ component extends="testbox.system.BaseSpec" {
                 expect(arrayContains(summaries, "addedB")).toBeTrue();
                 expect(arrayContains(summaries, "unrelatedC")).toBeFalse();
             });
+
+            it("postReportAnnotations treats empty annotation files as a no-op", function(){
+                var annotationPath = variables.tmpDir & "/filtered-annotations.json";
+                fileWrite(annotationPath, serializeJson([]));
+
+                var result = variables.mod.postReportAnnotations(
+                    commit = "abc123",
+                    annotationFile = annotationPath,
+                    reportId = "lint"
+                );
+
+                expect(isArray(result)).toBeTrue();
+                expect(arrayLen(result)).toBe(0);
+            });
         });
     }
 }

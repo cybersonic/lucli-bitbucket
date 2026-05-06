@@ -287,8 +287,13 @@ component extends="modules.BaseModule" {
             annotations = payload.annotations;
         }
 
-        if(!isArray(annotations) OR arrayLen(annotations) EQ 0){
-            throw("No annotations found in file: #arguments.dataFile#");
+        if(!isArray(annotations)){
+            throw("No annotations array found in file: #arguments.dataFile#");
+        }
+
+        // Empty annotations are a valid no-op input (e.g. filtered result with no matches).
+        if(arrayLen(annotations) EQ 0){
+            return [];
         }
 
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
