@@ -52,9 +52,9 @@ component extends="modules.BaseModule" {
         string reportSlug="",
         numeric pullRequestId=0,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         if(!Len(arguments.action)){
             return showHelp();
@@ -89,10 +89,11 @@ component extends="modules.BaseModule" {
      * Shared Bitbucket client factory.
      */
     private any function createClient(
-        string repoSlug="",
-        string workspace="",
-        string authToken="",
-        string authUser=""
+        
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
+        string authUser=getEnv("BITBUCKET_AUTH_USER", "")
     ){
 
         // If we don't have the required params, get it from the env, and if we still don't have it show a proper error message
@@ -130,9 +131,9 @@ component extends="modules.BaseModule" {
         required string commit,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format=""
     ){
         var res = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
@@ -159,9 +160,9 @@ component extends="modules.BaseModule" {
     public any function reports_get(
         required string commit,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getReport(
@@ -178,10 +179,11 @@ component extends="modules.BaseModule" {
         required string commit,
         required string dataFile,
         string reportId="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
+        
         var reportData = readJsonFile(arguments.dataFile);
         var reportIdToUse = arguments.reportId;
         if(!Len(reportIdToUse) AND isStruct(reportData) AND structKeyExists(reportData, "title") AND Len(reportData.title)){
@@ -203,9 +205,9 @@ component extends="modules.BaseModule" {
     public any function reports_delete(
         required string commit,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deleteReport(
@@ -223,9 +225,9 @@ component extends="modules.BaseModule" {
         required string reportId,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format=""
     ){
         var res = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
@@ -254,9 +256,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string reportId,
         required string annotationId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getReportAnnotation(
@@ -274,9 +276,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string dataFile,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var payload = readJsonFile(arguments.dataFile);
         var annotations = [];
@@ -312,9 +314,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string dataFile,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return reports_annotations_post(
             commit=arguments.commit,
@@ -335,9 +337,9 @@ component extends="modules.BaseModule" {
         required string reportId,
         required string annotationId,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .putReportAnnotation(
@@ -356,9 +358,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string reportId,
         required string annotationId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deleteReportAnnotation(
@@ -376,9 +378,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string file,
         string reportId="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var reportResponse = reports_create(
             commit=arguments.commit,
@@ -420,9 +422,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string file,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return reports_annotations_post(
             commit=arguments.commit,
@@ -446,9 +448,9 @@ component extends="modules.BaseModule" {
         string sort="",
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format=""
     ){
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
@@ -479,9 +481,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_get(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequest(pullRequestId=arguments.pullRequestId);
@@ -493,9 +495,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_create(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPullRequest(
@@ -510,9 +512,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_update(
         required numeric pullRequestId,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePullRequest(
@@ -527,9 +529,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_decline(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .declinePullRequest(pullRequestId=arguments.pullRequestId);
@@ -542,9 +544,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_merge(
         required numeric pullRequestId,
         string dataFile="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var mergeData = {};
         if(Len(arguments.dataFile)){
@@ -564,9 +566,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_merge_task_status(
         required numeric pullRequestId,
         required string taskId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestMergeTaskStatus(
@@ -583,9 +585,9 @@ component extends="modules.BaseModule" {
         required numeric pullRequestId,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestDiffStat(
@@ -602,9 +604,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_diff(
         required numeric pullRequestId,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var diffContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestDiff(pullRequestId=arguments.pullRequestId);
@@ -624,9 +626,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_patch(
         required numeric pullRequestId,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var patchContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestPatch(pullRequestId=arguments.pullRequestId);
@@ -645,9 +647,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_approve(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .approvePullRequest(pullRequestId=arguments.pullRequestId);
@@ -659,9 +661,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_unapprove(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .unapprovePullRequest(pullRequestId=arguments.pullRequestId);
@@ -673,9 +675,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_request_changes(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .requestChangesPullRequest(pullRequestId=arguments.pullRequestId);
@@ -687,9 +689,9 @@ component extends="modules.BaseModule" {
      */
     public any function pullrequests_remove_request_changes(
         required numeric pullRequestId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .removeRequestChangesPullRequest(pullRequestId=arguments.pullRequestId);
@@ -703,9 +705,9 @@ component extends="modules.BaseModule" {
         required numeric pullRequestId,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestActivity(
@@ -723,9 +725,9 @@ component extends="modules.BaseModule" {
         required numeric pullRequestId,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestCommits(
@@ -745,9 +747,9 @@ component extends="modules.BaseModule" {
         string sort="",
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestComments(
@@ -768,9 +770,9 @@ component extends="modules.BaseModule" {
         required numeric pullRequestId,
         string comment="",
         string commentFile="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
 
         var finalComment = "";
@@ -808,9 +810,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_comments_get(
         required numeric pullRequestId,
         required numeric commentId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestComment(
@@ -829,9 +831,9 @@ component extends="modules.BaseModule" {
         string comment="",
         string commentFile="",
         string dataFile="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var commentData = {};
         if(Len(arguments.comment)){
@@ -883,9 +885,9 @@ component extends="modules.BaseModule" {
         string marker="",
         numeric scanPageLen=100,
         numeric maxScanPages=20,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var commentData = {};
         if(Len(arguments.comment)){
@@ -1026,9 +1028,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_comments_delete(
         required numeric pullRequestId,
         required numeric commentId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePullRequestComment(
@@ -1047,9 +1049,9 @@ component extends="modules.BaseModule" {
         string sort="",
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestTasks(
@@ -1068,9 +1070,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_tasks_create(
         required numeric pullRequestId,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPullRequestTask(
@@ -1086,9 +1088,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_tasks_get(
         required numeric pullRequestId,
         required numeric taskId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPullRequestTask(
@@ -1105,9 +1107,9 @@ component extends="modules.BaseModule" {
         required numeric pullRequestId,
         required numeric taskId,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePullRequestTask(
@@ -1124,9 +1126,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_tasks_delete(
         required numeric pullRequestId,
         required numeric taskId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePullRequestTask(
@@ -1143,9 +1145,9 @@ component extends="modules.BaseModule" {
         required string commit,
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPullRequestsForCommit(
@@ -1175,9 +1177,9 @@ component extends="modules.BaseModule" {
         string sort="",
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format=""
     ){
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
@@ -1213,9 +1215,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_create(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .runPipeline(
@@ -1228,9 +1230,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_run(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return pipelines_create(
             dataFile=arguments.dataFile,
@@ -1246,9 +1248,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_get(
         required string pipelineUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipeline(
@@ -1262,9 +1264,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_stop(
         required string pipelineUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .stopPipeline(
@@ -1278,9 +1280,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_steps(
         required string pipelineUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineSteps(
@@ -1295,9 +1297,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_steps_get(
         required string pipelineUuid,
         required string stepUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStep(
@@ -1314,9 +1316,9 @@ component extends="modules.BaseModule" {
         required string pipelineUuid,
         required string stepUuid,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var logContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStepLog(
@@ -1341,9 +1343,9 @@ component extends="modules.BaseModule" {
         required string stepUuid,
         required string logUuid,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var logContent = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStepLogs(
@@ -1367,9 +1369,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_steps_test_reports(
         required string pipelineUuid,
         required string stepUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStepTestReports(
@@ -1385,9 +1387,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_steps_test_reports_test_cases(
         required string pipelineUuid,
         required string stepUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStepTestCases(
@@ -1404,9 +1406,9 @@ component extends="modules.BaseModule" {
         required string pipelineUuid,
         required string stepUuid,
         required string testCaseUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineStepTestCaseReasons(
@@ -1421,9 +1423,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/caches
      */
     public any function pipelines_config_caches(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineCaches();
@@ -1435,9 +1437,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_caches_delete(
         string name="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineCaches(
@@ -1451,9 +1453,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_caches_delete_cache(
         required string cacheUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineCache(
@@ -1467,9 +1469,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_caches_content_uri(
         required string cacheUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineCacheContentUri(
@@ -1482,9 +1484,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines-config/runners
      */
     public any function pipelines_config_runners(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineRunners();
@@ -1495,9 +1497,9 @@ component extends="modules.BaseModule" {
      * Maps to POST /repositories/{workspace}/{repo_slug}/pipelines-config/runners
      */
     public any function pipelines_config_runners_create(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPipelineRunner();
@@ -1509,9 +1511,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_runners_get(
         required string runnerUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineRunner(
@@ -1525,9 +1527,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_runners_update(
         required string runnerUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineRunner(
@@ -1541,9 +1543,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_runners_delete(
         required string runnerUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineRunner(
@@ -1556,9 +1558,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config
      */
     public any function pipelines_config(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelinesConfig();
@@ -1570,9 +1572,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_update(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelinesConfig(
@@ -1586,9 +1588,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_build_number_update(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelinesBuildNumber(
@@ -1601,9 +1603,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/schedules
      */
     public any function pipelines_config_schedules(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineSchedules();
@@ -1615,9 +1617,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_schedules_create(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPipelineSchedule(
@@ -1631,9 +1633,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_schedules_get(
         required string scheduleUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineSchedule(
@@ -1648,9 +1650,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_config_schedules_update(
         required string scheduleUuid,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineSchedule(
@@ -1665,9 +1667,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_schedules_delete(
         required string scheduleUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineSchedule(
@@ -1681,9 +1683,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_schedules_executions(
         required string scheduleUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineScheduleExecutions(
@@ -1696,9 +1698,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/key_pair
      */
     public any function pipelines_config_ssh_key_pair(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineSshKeyPair();
@@ -1710,9 +1712,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_ssh_key_pair_update(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineSshKeyPair(
@@ -1725,9 +1727,9 @@ component extends="modules.BaseModule" {
      * Maps to DELETE /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/key_pair
      */
     public any function pipelines_config_ssh_key_pair_delete(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineSshKeyPair();
@@ -1738,9 +1740,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/ssh/known_hosts
      */
     public any function pipelines_config_ssh_known_hosts(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineKnownHosts();
@@ -1752,9 +1754,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_ssh_known_hosts_create(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPipelineKnownHost(
@@ -1768,9 +1770,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_ssh_known_hosts_get(
         required string knownHostUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineKnownHost(
@@ -1785,9 +1787,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_config_ssh_known_hosts_update(
         required string knownHostUuid,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineKnownHost(
@@ -1802,9 +1804,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_ssh_known_hosts_delete(
         required string knownHostUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineKnownHost(
@@ -1817,9 +1819,9 @@ component extends="modules.BaseModule" {
      * Maps to GET /repositories/{workspace}/{repo_slug}/pipelines_config/variables
      */
     public any function pipelines_config_variables(
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineVariables();
@@ -1831,9 +1833,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_variables_create(
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPipelineVariable(
@@ -1847,9 +1849,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_variables_get(
         required string variableUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .getPipelineVariable(
@@ -1864,9 +1866,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_config_variables_update(
         required string variableUuid,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineVariable(
@@ -1881,9 +1883,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_config_variables_delete(
         required string variableUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineVariable(
@@ -1897,9 +1899,9 @@ component extends="modules.BaseModule" {
      */
     public any function pipelines_environments_variables(
         required string environmentUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listPipelineEnvironmentVariables(
@@ -1914,9 +1916,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_environments_variables_create(
         required string environmentUuid,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .createPipelineEnvironmentVariable(
@@ -1933,9 +1935,9 @@ component extends="modules.BaseModule" {
         required string environmentUuid,
         required string variableUuid,
         required string dataFile,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .updatePipelineEnvironmentVariable(
@@ -1952,9 +1954,9 @@ component extends="modules.BaseModule" {
     public any function pipelines_environments_variables_delete(
         required string environmentUuid,
         required string variableUuid,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .deletePipelineEnvironmentVariable(
@@ -1973,9 +1975,9 @@ component extends="modules.BaseModule" {
         string sort="",
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format=""
     ){
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
@@ -2022,9 +2024,9 @@ component extends="modules.BaseModule" {
         numeric childPageLen=100,
         numeric maxFilesPerPR=500,
         numeric maxCommitsPerPR=200,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format="json",
         string outputPath=""
     ){
@@ -2364,9 +2366,9 @@ component extends="modules.BaseModule" {
     public any function pullrequests_default_reviewers(
         numeric page=0,
         numeric pagelen=0,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         return createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken)
             .listDefaultReviewers(
@@ -2382,9 +2384,9 @@ component extends="modules.BaseModule" {
     public any function addReviewers(
         required numeric pullRequestId,
         required string reviewerUuids,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var reviewerUuidList = listToArray(arguments.reviewerUuids, ",");
         var normalizedReviewerUuids = [];
@@ -2424,9 +2426,9 @@ component extends="modules.BaseModule" {
         numeric pullRequestId=0,
         numeric diffstatPageLen=100,
         numeric maxDiffstatPages=100,
-        string workspace="",
-        string repoSlug="",
-        string authToken="",
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
         string format="json",
         string outputPath=""
     ){
@@ -2543,9 +2545,9 @@ component extends="modules.BaseModule" {
     public any function getPullRequestDiff(
         numeric pullRequestId = 0,
         string outputPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         // For this function we need a pull request id
         var prId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
@@ -2673,9 +2675,9 @@ component extends="modules.BaseModule" {
     public any function downloadFile(
         required string fileURL,
         required string destinationPath,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ){
         var bb = createClient(
             workspace=arguments.workspace,
@@ -2697,9 +2699,9 @@ component extends="modules.BaseModule" {
     public any function downloadPRFiles(
         numeric pullRequestId = 0,
         string downloadPath="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ) {
         var prId = arguments.pullRequestId ?: getEnv("BITBUCKET_PR_ID", "");
         var bb = createClient(workspace=arguments.workspace, repoSlug=arguments.repoSlug, authToken=arguments.authToken);
@@ -2796,13 +2798,16 @@ component extends="modules.BaseModule" {
     public any function postReport(
         required string commit, 
         required string reportPath, 
-        required string reportID, 
+        required string reportId, 
         string title="",
         string details="",
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ) {
+
+        // lucli bitbucket postReport commit="${BITBUCKET_COMMIT}" reportPath="${REPORT_PATH}" reportId="${reportTitle}" title="Linting Report" details="Automated linting report"
+        // echo(arguments.repoSlug);
         if(!Len(arguments.title) AND !Len(arguments.details)){
             return reports_create(
                 commit=arguments.commit,
@@ -2847,9 +2852,9 @@ component extends="modules.BaseModule" {
         required string commit,
         required string annotationFile,
         required string reportId,
-        string workspace="",
-        string repoSlug="",
-        string authToken=""
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", "")
     ) {
         return reports_annotations_post(
             commit=arguments.commit,
