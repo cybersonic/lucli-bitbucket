@@ -385,7 +385,7 @@ component {
         required struct pullRequestData
     ){
         var path = "repositories/#variables.workspace#/#variables.repoSlug#/pullrequests/#pullRequestId#";
-
+        
         return doCall(
             path=path,
             method="PUT",
@@ -409,16 +409,15 @@ component {
             if(right(uuidValue, 1) NEQ "}"){
                 uuidValue = "#uuidValue#}";
             }
-            arrayAppend(reviewers, { uuid = uuidValue });
+            arrayAppend(reviewers, { "uuid" = uuidValue });
         }
 
         if(!arrayLen(reviewers)){
             throw("reviewerUuids must contain at least one UUID");
         }
-
         return updatePullRequest(
             pullRequestId=arguments.pullRequestId,
-            pullRequestData={ reviewers = reviewers }
+            pullRequestData={ "reviewers" = reviewers }
         );
     }
 
