@@ -2610,7 +2610,6 @@ component extends="modules.BaseModule" {
                     if(annotationRealPath NEQ filePath){
                         continue;
                     }
-                    systemOutput(annotation);
                     // dump(var=annotation, label="Checking annotation " & annotationRealPath & ":" & annotation.line);
                     // If we have an end_line, check the range
                     if( structKeyExists(annotation, "end_line") ){
