@@ -420,7 +420,7 @@ component {
                 }
 
                 if(!structKeyExists(reviewerUuidsSeen, lCase(existingUuid))){
-                    systemOutput("Adding existing reviewer: #existingUuid#");
+                    // systemOutput("Adding existing reviewer: #existingUuid#");
                     reviewerUuidsSeen[lCase(existingUuid)] = true;
                     arrayAppend(reviewers, { "uuid" = existingUuid });
                 }
@@ -441,7 +441,7 @@ component {
             }
             reviewerUuidCount++;
             if(!structKeyExists(reviewerUuidsSeen, lCase(uuidValue))){
-                systemOutput("Adding new reviewer: #uuidValue#");
+                // systemOutput("Adding new reviewer: #uuidValue#");
                 reviewerUuidsSeen[lCase(uuidValue)] = true;
                 arrayAppend(reviewers, { "uuid" = uuidValue });
             }
