@@ -2390,7 +2390,7 @@ component extends="modules.BaseModule" {
     ){
         var reviewerUuidList = listToArray(arguments.reviewerUuids, ",");
         var normalizedReviewerUuids = [];
-
+        
         for(var reviewerUuid in reviewerUuidList){
             var uuidValue = trim(reviewerUuid & "");
             if(!Len(uuidValue)){
@@ -2738,7 +2738,7 @@ component extends="modules.BaseModule" {
         for(var fileInfo in prFiles.values){
 
             var fileURL = fileInfo.new?.links?.self?.href;
-            var filePath =  fileInfo?.new?.path;
+            var filePath =  fileInfo?.new?.path ?: fileInfo?.old?.path ?: "";;
 
             if(fileInfo.status EQ "removed"){
                 arrayAppend(result.skipped, {
