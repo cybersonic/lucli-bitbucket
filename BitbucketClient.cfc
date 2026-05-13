@@ -397,7 +397,37 @@ component {
         required numeric pullRequestId,
         required array reviewerUuids
     ){
+        var pullRequestResponse = getPullRequest(pullRequestId=arguments.pullRequestId);
+        var pullRequest = isSimpleValue(pullRequestResponse) ? deserializeJSON(pullRequestResponse) : pullRequestResponse;
         var reviewers = [];
+        var reviewerUuidsSeen = {};
+
+        if(isStruct(pullRequest) AND structKeyExists(pullRequest, "reviewers") AND isArray(pullRequest.reviewers)){
+            for(var existingReviewer in pullRequest.reviewers){
+                if(!isStruct(existingReviewer) OR !structKeyExists(existingReviewer, "uuid")){
+                    continue;
+                }
+
+                var existingUuid = trim(existingReviewer.uuid & "");
+                if(!Len(existingUuid)){
+                    continue;
+                }
+                if(left(existingUuid, 1) NEQ "{"){
+                    existingUuid = "{#existingUuid#";
+                }
+                if(right(existingUuid, 1) NEQ "}"){
+                    existingUuid = "#existingUuid#}";
+                }
+
+                if(!structKeyExists(reviewerUuidsSeen, lCase(existingUuid))){
+                    // systemOutput("Adding existing reviewer: #existingUuid#");
+                    reviewerUuidsSeen[lCase(existingUuid)] = true;
+                    arrayAppend(reviewers, { "uuid" = existingUuid });
+                }
+            }
+        }
+
+        var reviewerUuidCount = 0;
         for(var reviewerUuid in arguments.reviewerUuids){
             var uuidValue = trim(reviewerUuid & "");
             if(!Len(uuidValue)){
@@ -409,10 +439,15 @@ component {
             if(right(uuidValue, 1) NEQ "}"){
                 uuidValue = "#uuidValue#}";
             }
-            arrayAppend(reviewers, { "uuid" = uuidValue });
+            reviewerUuidCount++;
+            if(!structKeyExists(reviewerUuidsSeen, lCase(uuidValue))){
+                // systemOutput("Adding new reviewer: #uuidValue#");
+                reviewerUuidsSeen[lCase(uuidValue)] = true;
+                arrayAppend(reviewers, { "uuid" = uuidValue });
+            }
         }
 
-        if(!arrayLen(reviewers)){
+        if(!reviewerUuidCount){
             throw("reviewerUuids must contain at least one UUID");
         }
         return updatePullRequest(

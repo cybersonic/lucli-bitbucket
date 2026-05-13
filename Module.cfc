@@ -2737,8 +2737,8 @@ component extends="modules.BaseModule" {
 
         for(var fileInfo in prFiles.values){
 
-            var fileURL = fileInfo.new?.links?.self?.href;
-            var filePath =  fileInfo?.new?.path ?: fileInfo?.old?.path ?: "";;
+            var fileURL = fileInfo.new?.links?.self?.href ?: "";
+            var filePath =  fileInfo?.new?.path ?: fileInfo?.old?.path ?: "";
 
             if(fileInfo.status EQ "removed"){
                 arrayAppend(result.skipped, {
