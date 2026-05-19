@@ -934,7 +934,7 @@ component extends="modules.BaseModule" {
             var hasLegacyMarker = Len(legacyMarkerValue) AND findNoCase(legacyMarkerValue, rawContent) GT 0;
             if(!hasPlainMarker AND !hasLegacyMarker){
                 if(Len(rawContent)){
-                    rawContent = rawContent & chr(10) & chr(10) & markerValue;
+                    rawContent = markerValue & chr(10) & chr(10) & rawContent;
                 }
                 else {
                     rawContent = markerValue;
