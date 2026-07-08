@@ -1,6 +1,6 @@
 {
   "name": "bitbucket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Bitbucket integration module for LuCLI",
   "author": "Mark Drew mark.drew@gmail.com",
   "license": "MIT",
