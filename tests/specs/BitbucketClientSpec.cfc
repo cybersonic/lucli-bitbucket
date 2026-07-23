@@ -461,6 +461,52 @@ component extends="testbox.system.BaseSpec" {
                 expect(variables.bb.getAuthorizationHeader()).toBe("Bearer tokenA");
             });
 
+            it("accepts qualified repoSlug and infers workspace when workspace argument is blank", function(){
+                var inferredClient = new tests.helpers.FakeBitbucketClient(
+                    workspace = "",
+                    repoSlug = "teamA/repoA",
+                    authToken = "tokenA"
+                );
+
+                inferredClient.getRepository();
+                var call = inferredClient.getLastCall();
+                expect(call.path).toBe("repositories/teamA/repoA");
+            });
+
+            it("accepts bare repoSlug when workspace argument is provided", function(){
+                var explicitWorkspaceClient = new tests.helpers.FakeBitbucketClient(
+                    workspace = "teamB",
+                    repoSlug = "repoB",
+                    authToken = "tokenA"
+                );
+
+                explicitWorkspaceClient.getRepository();
+                var call = explicitWorkspaceClient.getLastCall();
+                expect(call.path).toBe("repositories/teamB/repoB");
+            });
+
+            it("prefers the workspace embedded in a qualified repoSlug over ambient workspace input", function(){
+                var normalizedClient = new tests.helpers.FakeBitbucketClient(
+                    workspace = "teamA",
+                    repoSlug = "teamB/repoA",
+                    authToken = "tokenA"
+                );
+
+                normalizedClient.getRepository();
+                var call = normalizedClient.getLastCall();
+                expect(call.path).toBe("repositories/teamB/repoA");
+            });
+
+            it("requires workspace when repoSlug is not qualified", function(){
+                expect(function(){
+                    new tests.helpers.FakeBitbucketClient(
+                        workspace = "",
+                        repoSlug = "repoOnly",
+                        authToken = "tokenA"
+                    );
+                }).toThrow(regex = "BITBUCKET_WORKSPACE is required");
+            });
+
             it("uses basic authorization when auth user is provided", function(){
                 var personalClient = new BitbucketClient(
                     workspace = "workspaceA",

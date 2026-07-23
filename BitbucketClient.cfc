@@ -33,6 +33,13 @@ component {
         return variables.authType ?: "bearer";
     }
 
+    function getRepositoryContext(){
+        return {
+            workspace = variables.workspace ?: "",
+            repoSlug = variables.repoSlug ?: ""
+        };
+    }
+
     function getAuthorizationHeader(){
         var token = Trim(variables.authToken ?: "");
         if(!Len(token)){
@@ -53,6 +60,47 @@ component {
         return "Bearer " & token;
     }
 
+    private struct function resolveRepositoryContext(
+        string workspace="",
+        string repoSlug=""
+    ){
+        var resolvedWorkspace = Trim(arguments.workspace ?: "");
+        var rawRepoSlug = Trim(arguments.repoSlug ?: "");
+
+        if(!Len(rawRepoSlug)){
+            throw("BITBUCKET_REPO_SLUG is required.");
+        }
+
+        // Accept either:
+        // - repoSlug: "repo"
+        // - repoSlug: "workspace/repo"
+        if(find("/", rawRepoSlug)){
+            var repoParts = listToArray(rawRepoSlug, "/");
+            if(arrayLen(repoParts) NEQ 2){
+                throw("repoSlug must be either '<repoSlug>' or '<workspace>/<repoSlug>'.");
+            }
+
+            var parsedWorkspace = Trim(repoParts[1] ?: "");
+            var parsedRepoSlug = Trim(repoParts[2] ?: "");
+            if(!Len(parsedWorkspace) OR !Len(parsedRepoSlug)){
+                throw("repoSlug must be either '<repoSlug>' or '<workspace>/<repoSlug>'.");
+            }
+
+
+            resolvedWorkspace = parsedWorkspace;
+            rawRepoSlug = parsedRepoSlug;
+        }
+
+        if(!Len(resolvedWorkspace)){
+            throw("BITBUCKET_WORKSPACE is required when repoSlug is not explicitly qualified as '<workspace>/<repoSlug>'.");
+        }
+
+        return {
+            workspace = resolvedWorkspace,
+            repoSlug = rawRepoSlug
+        };
+    }
+
     function init(
         string workspace,
         string repoSlug,
@@ -60,8 +108,13 @@ component {
         string authType="",
         string authUser=""
     ){
-        variables.workspace = arguments.workspace;
-        variables.repoSlug = arguments.repoSlug;
+        var repoContext = resolveRepositoryContext(
+            workspace = arguments.workspace,
+            repoSlug = arguments.repoSlug
+        );
+
+        variables.workspace = repoContext.workspace;
+        variables.repoSlug = repoContext.repoSlug;
         variables.authToken = arguments.authToken ?: "";
         variables.authUser = arguments.authUser ?: "";
 

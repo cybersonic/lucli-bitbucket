@@ -11,6 +11,10 @@ component extends="testbox.system.BaseSpec" {
                 expect(findNoCase("public any function pullrequests_get(", variables.moduleSource) GT 0).toBeTrue();
             });
 
+            it("contains repository context validation helper", function(){
+                expect(findNoCase("public any function contexts_validate(", variables.moduleSource) GT 0).toBeTrue();
+            });
+
             it("pullrequests_comments exposes q/sort and forwards them to the client", function(){
                 var fnStart = findNoCase("public any function pullrequests_comments(", variables.moduleSource);
                 expect(fnStart GT 0).toBeTrue();

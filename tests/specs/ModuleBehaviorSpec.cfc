@@ -160,6 +160,26 @@ component extends="testbox.system.BaseSpec" {
                 expect(isArray(result)).toBeTrue();
                 expect(arrayLen(result)).toBe(0);
             });
+
+            it("contexts_validate resolves bare repoSlug with explicit workspace", function(){
+                var result = variables.mod.contexts_validate(
+                    workspace = "teamA",
+                    repoSlug = "repoA"
+                );
+
+                expect(result.workspace).toBe("teamA");
+                expect(result.repoSlug).toBe("repoA");
+            });
+
+            it("contexts_validate resolves qualified repoSlug and prefers embedded workspace", function(){
+                var result = variables.mod.contexts_validate(
+                    workspace = "ignoredWorkspace",
+                    repoSlug = "teamB/repoB"
+                );
+
+                expect(result.workspace).toBe("teamB");
+                expect(result.repoSlug).toBe("repoB");
+            });
         });
     }
 }

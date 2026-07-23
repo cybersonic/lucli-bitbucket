@@ -121,6 +121,26 @@ component extends="modules.BaseModule" {
         return deserializeJson(fileRead(absPath));
     }
 
+    /**
+     * Decorated helper: validate and normalize repository context.
+     * Accepts repoSlug as either "<repoSlug>" or "<workspace>/<repoSlug>".
+     * Returns the resolved context without making a Bitbucket API call.
+     */
+    public any function contexts_validate(
+        string workspace=getEnv("BITBUCKET_WORKSPACE", ""),
+        string repoSlug=getEnv("BITBUCKET_REPO_SLUG", ""),
+        string authToken=getEnv("BITBUCKET_AUTH_TOKEN", ""),
+        string authUser=getEnv("BITBUCKET_AUTH_USER", "")
+    ){
+        var bb = createClient(
+            workspace=arguments.workspace,
+            repoSlug=arguments.repoSlug,
+            authToken=arguments.authToken,
+            authUser=arguments.authUser
+        );
+        return bb.getRepositoryContext();
+    }
+
     // --- Reports (API group: /reports) ---
 
     /**
